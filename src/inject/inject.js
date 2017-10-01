@@ -68,54 +68,51 @@ function setNameUsingAddress(addressToSet, mode){
   tmp.value = formattedAddress;
 }
 
-/**
- * Adds the tip poster button to the menu.
- * Specific for vanilla 4chan compatibility
- * @return void
- */
-function addButton(postAddress) {
-  postAddress = postAddress.toLowerCase();
-  // TODO Refactor this into a predicate
-  if( postAddress.startsWith("$4chn:") ||
-      postAddress.startsWith("$4CHN:") ||
-      postAddress.startsWith("$CHAN:") ||
-      postAddress.startsWith("$chan:") ) {
+var postAddressPrefixes = ["$4chn:", "$4CHN:", "$CHAN:", "$chan:"];
 
-    var a = document.getElementById("post-menu").children[0];
-    var b = document.createElement("li");
-    b.innerHTML = "<img src='http://i.imgur.com/sh8aYT1.png' style='width:15px;vertical-align:middle'/>  Tip poster";
-    b.addEventListener("click", send4CHN);
-    a.appendChild(b);
-  }
+function startsWithPostAddressPrefixes (postAddress) {
+  return postAddressPrefixes.filter( function (e) { return postAddress.startsWith(e); }).length > 0;
 }
 
 /**
  * Adds the tip poster button to the menu.
- * Specific for 4chanX compatibility
+ * The parameter @param {boolean} is4ChanXPresent can be optionally passed to indicate that 4ChanX is installed,
+ * since the DOM node to which the menu item will be appended to is different in that case.
  * @return void
  */
-function addButtonX(postAddress) {
-  postAddress = postAddress.toLowerCase();
-  // TODO Refactor this into a predicate (and de-dupe it if possible)
-  if( postAddress.startsWith("$4chn:") ||
-      postAddress.startsWith("$4CHN:") ||
-      postAddress.startsWith("$CHAN:") ||
-      postAddress.startsWith("$chan:") ) {
-    if(document.getElementById("tipPoster") === null) {
+function addButton(postAddress, is4ChanXPresent) {
+  // transforms undefined into false, in case is4ChanXPresent is not passed
+  // also transforms any other truthy value into true
+  is4ChanXPresent = !!is4ChanXPresent;
 
-      var a = document.getElementById("menu");
-      var b = document.createElement("a");
-      b.id = "tipPoster";
-      b.className += ' entry';
-      b.click = "send4CHN()";
-      b.onmouseout  = removeFocus;
-      b.onmouseover = addFocus;
-      b.innerHTML = "<img src='http://i.imgur.com/sh8aYT1.png' style='width:15px;vertical-align:middle' />  Tip poster";
-      b.addEventListener("click", send4CHN);
-      a.appendChild(b);
-    }
+  postAddress = postAddress.toLowerCase();
+
+  if (!startsWithPostAddressPrefixes(postAddress)){
+    return;
   }
+
+  var menuDomRef;
+  var menuItemDomRef;
+
+  if (is4ChanXPresent){
+    menuDomRef = document.getElementById("menu");
+    menuItemDomRef = document.createElement("a");
+    menuItemDomRef.id = "tipPoster";
+    menuItemDomRef.className += ' entry';
+    menuItemDomRef.click = "send4CHN()";
+    menuItemDomRef.onmouseout  = removeFocus;
+    menuItemDomRef.onmouseover = addFocus;
+  } else {
+    menuDomRef = document.getElementById("post-menu").children[0];
+    menuItemDomRef = document.createElement("li");
+  }
+
+    menuItemDomRef.innerHTML = "<img src='http://i.imgur.com/sh8aYT1.png' style='width:15px;vertical-align:middle'/>  Tip poster";
+    menuItemDomRef.addEventListener("click", send4CHN);
+    menuDomRef.appendChild(menuItemDomRef);
+
 }
+
 
 /**
  * Clears the Focused class from all child nodes in the menu element.
@@ -311,7 +308,7 @@ function checkForCSS_Class (node, className) {
       switch (className) {
         case "dialog":
           // Adding a button with 4ChanX
-          addButtonX(getPostAddressX());
+          addButton(getPostAddressX(), true);
           break;
         case "dd-menu":
           // adding a button with vanilla 4chan
