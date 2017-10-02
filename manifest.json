@@ -1,22 +1,24 @@
 {
-  "name": "CHANCOIN : Tipping Extension",
-  "version": "0.0.5",
+  "name": "CHANCOIN : Tipping Extension TEST",
+  "version": "0.0.6",
   "manifest_version": 2,
   "description": "Simple tip extension created by the CHANCOIN Team.",
   "homepage_url": "http://chancoin.org",
   "icons": {
-    "16": "icons/icon16.png",
-    "48": "icons/icon48.png",
-    "32": "icons/icon32.png",
-    "128": "icons/icon128.png"
+    "16": "res/icons/icon16.png",
+    "48": "res/icons/icon48.png",
+    "32": "res/icons/icon32.png",
+    "128": "res/icons/icon128.png"
   },
   "browser_action": {
-    "default_icon": "icons/icon32.png",
-    "default_popup": "html/modal.html"
+    "default_icon": "res/icons/icon32.png",
+    "default_popup": "res/html/modal.html"
   },
   "permissions": [
     "https://boards.4chan.org/*",
     "http://boards.4chan.org/*",
+    "https://8ch.net/*",
+    "http://8ch.net/*",
     "http://localhost/*",
     "http://127.0.0.1/*",
     "storage"
@@ -25,19 +27,21 @@
     {
       "matches": [
         "https://boards.4chan.org/*",
-        "http://boards.4chan.org/*"
+        "http://boards.4chan.org/*",
+        "https://8ch.net/*",
+        "http://8ch.net/*"
       ],
       "css" : [
-        "css/sweetalert.css"
+        "res/css/sweetalert.css"
       ],
       "js": [
-        "js/jquery-3.2.1.min.js",
-        "js/bootstrap.min.js",
-        "js/sweetalert.min.js",
+        "res/js/jquery-3.2.1.min.js",
+        "res/js/bootstrap.min.js",
+        "res/js/sweetalert.min.js",
         "src/inject/inject.js"
       ],
       "run_at":"document_end"
     }
   ],
-  "web_accessible_resources": ["html/modal.html","js/bootstrap.min.js","css/bootstrap.min.css","js/modal.js"]
+  "web_accessible_resources": ["res/html/modal.html","res/js/bootstrap.min.js","res/css/bootstrap.min.css","res/js/modal.js","res/elements.json"]
 }

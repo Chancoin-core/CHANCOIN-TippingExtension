@@ -1,6 +1,14 @@
+var site;
+var elementCheck;
+
 window.onload = function() {
   var readyStateCheckInterval = setInterval(function() {
     if (document.readyState === "complete") {
+      elementCheck = JSON.parse(loadElements());
+
+      var patt = /https?:\/\/(?:.*\.)?(.+)\.(?:(?:org)|(?:net)).*/gi;
+      site = patt.exec(window.location.href)[1];
+
       clearInterval(readyStateCheckInterval);
 
       var mutationObserver = window.MutationObserver;
@@ -13,14 +21,24 @@ window.onload = function() {
       myObserver.observe (document, obsConfig);
 
       //Set the classic original form name now as its already loaded in the DOM
-      setAddressFromLocalStorageIfChecked(fourChanVanilla);
+      setAddressFromLocalStorageIfChecked(elementCheck[site].reg);
     }
   }, 10);
 };
 
-var fourChanVanillaQR = 0;
-var fourChanXQR = 1;
-var fourChanVanilla = 2;
+/**
+ * Gets the json file containing element definitions for chans
+ */
+function loadElements() {
+    var xhr = new XMLHttpRequest();
+    xhr.open("GET", chrome.extension.getURL('/res/elements.json'), false);
+    xhr.send();
+    while(xhr.readyState != 4 || xhr.status != 200)
+    {
+        ;; //TODO set a sanity var so we don't loop forever
+    }
+    return xhr.responseText;
+}
 
 /**
  * Sets the name field with the passed in wallet address. This method adds the "$4CHN:" prefix
@@ -56,24 +74,26 @@ function setAddressFromLocalStorageIfChecked(mode){
  */
 function setNameUsingAddress(addressToSet, mode){
   var formattedAddress = "$4CHN:" + addressToSet;
-  var tmp;
+  var elem;
 
-  if(mode === fourChanXQR) {
-    tmp = document.getElementById("qr").children[1].children[0].children[2];
-  } else if(mode === fourChanVanillaQR){
-    tmp = document.getElementById("qrForm").children[0].children[0];
-  } else if(mode === fourChanVanilla){
-    tmp = document.getElementById("postForm").children[0].children[0].children[1].children[0];
-  }
-  tmp.value = formattedAddress;
+  elem = document.getElementById(mode[0]);
+  $.each(mode, function(index, value) {
+    if (index === 0) {
+      return true; //continue
+    }
+    else {
+      elem = elem.children[value];
+    }
+  });
+
+  elem.value = formattedAddress;
 }
 
 /**
  * Adds the tip poster button to the menu.
- * Specific for vanilla 4chan compatibility
  * @return void
  */
-function addButton(postAddress) {
+function addButton(postAddress, special) {
   postAddress = postAddress.toLowerCase();
   // TODO Refactor this into a predicate
   if( postAddress.startsWith("$4chn:") ||
@@ -81,39 +101,23 @@ function addButton(postAddress) {
       postAddress.startsWith("$CHAN:") ||
       postAddress.startsWith("$chan:") ) {
 
-    var a = document.getElementById("post-menu").children[0];
-    var b = document.createElement("li");
-    b.innerHTML = "<img src='http://i.imgur.com/sh8aYT1.png' style='width:15px;vertical-align:middle'/>  Tip poster";
-    b.addEventListener("click", send4CHN);
-    a.appendChild(b);
-  }
-}
-
-/**
- * Adds the tip poster button to the menu.
- * Specific for 4chanX compatibility
- * @return void
- */
-function addButtonX(postAddress) {
-  postAddress = postAddress.toLowerCase();
-  // TODO Refactor this into a predicate (and de-dupe it if possible)
-  if( postAddress.startsWith("$4chn:") ||
-      postAddress.startsWith("$4CHN:") ||
-      postAddress.startsWith("$CHAN:") ||
-      postAddress.startsWith("$chan:") ) {
-    if(document.getElementById("tipPoster") === null) {
-
-      var a = document.getElementById("menu");
-      var b = document.createElement("a");
+    swal("Error!", "Value must be greater than or equal to 0.00000001.", "error");
+    var tmp = elementCheck[site];
+    var a = document.getElementById(special ? tmp.special.menu[0] : tmp.menu[0]);
+    if (!special) {
+      a = a.children[0];
+    }
+    var b = document.createElement(special ? "a" : "li");
+    if (special) {
       b.id = "tipPoster";
       b.className += ' entry';
       b.click = "send4CHN()";
       b.onmouseout  = removeFocus;
       b.onmouseover = addFocus;
-      b.innerHTML = "<img src='http://i.imgur.com/sh8aYT1.png' style='width:15px;vertical-align:middle' />  Tip poster";
-      b.addEventListener("click", send4CHN);
-      a.appendChild(b);
     }
+    b.innerHTML = "<img src='http://i.imgur.com/sh8aYT1.png' style='width:15px;vertical-align:middle'/>  Tip poster";
+    b.addEventListener("click", send4CHN);
+    a.appendChild(b);
   }
 }
 
@@ -183,7 +187,7 @@ function addressFromPostName(postName) {
 function send4CHN(address, amount) {
   var postAddress = getPostAddress();
   if(postAddress === ""){
-    postAddress = getPostAddressX();
+    postAddress = getPostAddress(true);
   }
 
   address = addressFromPostName(postAddress.replace(/\s+/g, ''));
@@ -247,27 +251,21 @@ function send4CHN(address, amount) {
 
 /**
  * Searchs the elements for the posters address.
- * To be used with vanilla 4chan.
  * @return {string} postAddress
  */
-function getPostAddress() {
+function getPostAddress(X) {
   try {
-    postNum = document.getElementById("post-menu").children[0].children[0].getAttribute("data-id");
-    return document.getElementById("pc" + document.getElementById("post-menu").children[0].children[0].getAttribute("data-id")).getElementsByClassName("name")[1].innerText;
-  } catch(e) {
-    return "";
-  }
-}
-
-/**
- * Searchs the elements for the posters address.
- * To be used with 4chanX.
- * @return {string} postAddress
- */
-function getPostAddressX(){
-  try {
-    postNum = document.getElementById("menu").parentNode.parentNode.children[0].name;
-    return document.getElementById("menu").parentNode.parentNode.getElementsByClassName("name")[0].innerText;
+    var tmp = elementCheck[site];
+    var postNum = document.getElementById(X ? tmp.special.menu[0] : tmp.menu[0]);
+    if(X)
+    {
+      postNum = postNum.parentNode.parentNode.children[0].name;
+    }
+    else {
+      postNum = postNum.children[0].children[0].getAttribute("data-id");
+    }
+    swal("Error!", postNum, "error");
+    return document.getElementById("pi" + postNum).getElementsByClassName("nameBlock").children[0].innerText;
   } catch(e) {
     return "";
   }
@@ -278,22 +276,19 @@ function getPostAddressX(){
  * @param {mutationRecords} mutationRecords
  * @return void
  */
-function mutationHandler (mutationRecords) {
-  mutationRecords.forEach ( function (mutation) {
+function mutationHandler(mutationRecords) {
+  mutationRecords.forEach (function(mutation) {
     if (mutation.type == "childList" && typeof mutation.addedNodes  == "object" && mutation.addedNodes.length) {
       for (var J = 0, L = mutation.addedNodes.length;  J < L;  ++J) {
-        checkForCSS_Class (mutation.addedNodes[J], "dd-menu");
-        checkForCSS_Class (mutation.addedNodes[J], "dialog");
-        checkForCSS_Class (mutation.addedNodes[J], "reply-to-thread");
-        checkForCSS_Class (mutation.addedNodes[J], "reply");
+        $.each(elementCheck[site].watch, function(index, value) {
+          checkForCSS_Class(mutation.addedNodes[J], value);
+        });
       }
     }
     else if (mutation.type == "attributes") {
-      checkForCSS_Class (mutation.target, "dd-menu");
-      checkForCSS_Class (mutation.target, "reply-to-thread");
-      checkForCSS_Class (mutation.target, "dialog");
-      checkForCSS_Class (mutation.target, "reply");
-
+      $.each(elementCheck[site].watch, function(index, value) {
+          checkForCSS_Class(mutation.addedNodes[J], value);
+        });
     }
   });
 }
@@ -305,25 +300,23 @@ function mutationHandler (mutationRecords) {
  * @param {string} class name to check
  * @return void
  */
-function checkForCSS_Class (node, className) {
+function checkForCSS_Class(node, className) {
   if (node.nodeType === 1) {
-    if (node.classList.contains (className) ) {
+    if (node.classList.contains(className)) {
       switch (className) {
         case "dialog":
-          // Adding a button with 4ChanX
-          addButtonX(getPostAddressX());
+          swal("Error!", "ayy", "error");
+          addButton(getPostAddress(), true);
           break;
         case "dd-menu":
-          // adding a button with vanilla 4chan
-          addButton(getPostAddress());
+          addButton(getPostAddress(), false);
           break;
         case "reply-to-thread":
-          // adding the wallet address to the name field with 4chanX
-          setAddressFromLocalStorageIfChecked(fourChanXQR);
+          swal("Error!", "ayy", "error");
+          setAddressFromLocalStorageIfChecked(elementCheck[site].special.QR);
           break;
         case "reply":
-          // adding the wallet address to the name field with vanilla 4chan
-          setAddressFromLocalStorageIfChecked(fourChanVanillaQR);
+          setAddressFromLocalStorageIfChecked(elementCheck[site].QR);
           break;
       }
     }
