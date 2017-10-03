@@ -94,31 +94,39 @@ function setNameUsingAddress(addressToSet, mode){
  * @return void
  */
 function addButton(postAddress, special) {
-  postAddress = postAddress.toLowerCase();
-  // TODO Refactor this into a predicate
-  if( postAddress.startsWith("$4chn:") ||
-      postAddress.startsWith("$4CHN:") ||
-      postAddress.startsWith("$CHAN:") ||
-      postAddress.startsWith("$chan:") ) {
-
-    swal("Error!", "Value must be greater than or equal to 0.00000001.", "error");
-    var tmp = elementCheck[site];
-    var a = document.getElementById(special ? tmp.special.menu[0] : tmp.menu[0]);
-    if (!special) {
-      a = a.children[0];
-    }
-    var b = document.createElement(special ? "a" : "li");
-    if (special) {
-      b.id = "tipPoster";
-      b.className += ' entry';
-      b.click = "send4CHN()";
-      b.onmouseout  = removeFocus;
-      b.onmouseover = addFocus;
-    }
-    b.innerHTML = "<img src='http://i.imgur.com/sh8aYT1.png' style='width:15px;vertical-align:middle'/>  Tip poster";
-    b.addEventListener("click", send4CHN);
-    a.appendChild(b);
+  if (postAddress === "") {
+    return;
   }
+
+  var tmp = elementCheck[site];
+  var a = document.getElementById(special ? tmp.special.menu[0] : tmp.menu[0]);
+
+  var doHalt = false;
+  $.each(a.children, function(index, value) {
+    if(value.innerHTML.indexOf("Tip poster") != -1) { //id doesn't get set if vanilla
+      doHalt = true;
+      return; //this just breaks the each, not the whole fn; hence the doHalt
+    }
+  });
+
+  if(doHalt) {
+    return;
+  }
+
+  if (!special) {
+    a = a.children[0];
+  }
+  var b = document.createElement(special ? "a" : "li");
+  if (special) {
+    b.id = "tipPoster";
+    b.className += ' entry';
+    b.click = "send4CHN()";
+    b.onmouseout  = removeFocus;
+    b.onmouseover = addFocus;
+  }
+  b.innerHTML = "<img src='http://i.imgur.com/sh8aYT1.png' style='width:15px;vertical-align:middle'/>  Tip poster";
+  b.addEventListener("click", send4CHN);
+    a.appendChild(b);
 }
 
 /**
@@ -180,17 +188,15 @@ function addressFromPostName(postName) {
 /**
  * Sends 4CHN to the posters address. The method takes advantage of the sweetalert
  * modal windows to collect and display information to the user.
- * @param {string} address
- * @param {Number} amount
  * @return {Number} sum
  */
-function send4CHN(address, amount) {
+function send4CHN() {
   var postAddress = getPostAddress();
-  if(postAddress === ""){
+  if (postAddress === ""){
     postAddress = getPostAddress(true);
   }
 
-  address = addressFromPostName(postAddress.replace(/\s+/g, ''));
+  var address = addressFromPostName(postAddress.replace(/\s+/g, ''));
 
   swal({
     title: "Tip a poster",
@@ -201,52 +207,46 @@ function send4CHN(address, amount) {
     animation: "slide-from-top",
     inputPlaceholder: "Number of coins",
     showLoaderOnConfirm: true,
-  },
-       function(inputValue){
+  }, function(inputValue){
+    //did user cancel
+    if (inputValue === false){
+      return;
+    }
 
-         //did user cancel
-         if(inputValue === false){
-           return;
-         }
-
-         if(inputValue==="" || /^\D+$/.test(inputValue)) {
-           //use a timeout so the loader has a chance to fire
-           setTimeout(function(){
-             swal("Error!", "Please enter a number.", "error");
-           }, 500);
-         }
-         else if(parseFloat(inputValue) < 0.00000001) {
-           //use a timeout so the loader has a chance to fire
-           setTimeout(function(){
-             swal("Error!", "Value must be greater than or equal to 0.00000001.", "error");
-           }, 500);
-         }
-         else if(inputValue!==null) {
-
-           $.ajax({
-             type: "POST",
-             url: "http://username:password@127.0.0.1:43814",
-             data: '{"method": "sendtoaddress", "params":["' + address + '",' + inputValue  + ',"A tip for post #' + postNum + '."]}',
-             dataType: "json",
-             contentType: "application/json-rpc;",
-             success: function(response) {
-               //use a timeout so the loader has a chance to fire
-               setTimeout(function(){
-                 if(response.error !== null) {
-                   swal("Error!", "There was an error sending the coins", "error");
-                 }
-                 else {
-                   swal("Success!", "You sent " + inputValue + " 4CHN to " + address + ".", "success");
-                 }
-               }, 500);
-
-             },
-             error: function(xhr, textStatus, errorThrown) {
-               swal("Error!", "There was an error sending the coins", "error");
-             }
-           });
-         }
-       });
+    if (inputValue === "" || /^\D+$/.test(inputValue)) {
+      //use a timeout so the loader has a chance to fire
+      setTimeout(function(){
+        swal("Error!", "Please enter a number.", "error");
+      }, 500);
+    }
+    else if (parseFloat(inputValue) < 0.00000001) {
+      //use a timeout so the loader has a chance to fire
+      setTimeout(function() {
+        swal("Error!", "Value must be greater than or equal to 0.00000001.", "error");
+      }, 500);
+    }
+    else if (inputValue !== null) {
+      $.ajax({
+        type: "POST",
+        url: "http://username:password@127.0.0.1:43814",
+        data: '{"method": "sendtoaddress", "params":["' + address + '",' + inputValue  + ',"A tip for post #' + postNum + '."]}',
+        dataType: "json",
+        contentType: "application/json-rpc;"
+      }).done(function(data, status, xhr) {
+        //use a timeout so the loader has a chance to fire
+        setTimeout(function(){
+          if (status.error !== null) { //TODO figure out status format
+            swal("Error!", "There was an error sending the coins", "error");
+          }
+          else {
+            swal("Success!", "You sent " + inputValue + " 4CHN to " + address + ".", "success");
+          }
+        }, 500);
+      }).fail(function(xhr, status, error) {
+        swal("Error!", "There was an error sending the coins", "error");
+      });
+    }
+  });
 }
 
 /**
@@ -264,8 +264,12 @@ function getPostAddress(X) {
     else {
       postNum = postNum.children[0].children[0].getAttribute("data-id");
     }
-    swal("Error!", postNum, "error");
-    return document.getElementById("pi" + postNum).getElementsByClassName("nameBlock").children[0].innerText;
+    var toRet = document.getElementById("pi" + postNum).children[1].children[0].innerText;
+    var patt = /^\$(?:(?:4CHN)|(?:CHAN)):\s?.{34}$/mgi;
+    if (!patt.test(toRet)) {
+      toRet = "";
+    }
+    return toRet;
   } catch(e) {
     return "";
   }
@@ -287,7 +291,7 @@ function mutationHandler(mutationRecords) {
     }
     else if (mutation.type == "attributes") {
       $.each(elementCheck[site].watch, function(index, value) {
-          checkForCSS_Class(mutation.addedNodes[J], value);
+          checkForCSS_Class(mutation.target, value);
         });
     }
   });
@@ -305,14 +309,12 @@ function checkForCSS_Class(node, className) {
     if (node.classList.contains(className)) {
       switch (className) {
         case "dialog":
-          swal("Error!", "ayy", "error");
-          addButton(getPostAddress(), true);
+          addButton(getPostAddress(true), true);
           break;
         case "dd-menu":
-          addButton(getPostAddress(), false);
+          addButton(getPostAddress(false), false);
           break;
         case "reply-to-thread":
-          swal("Error!", "ayy", "error");
           setAddressFromLocalStorageIfChecked(elementCheck[site].special.QR);
           break;
         case "reply":

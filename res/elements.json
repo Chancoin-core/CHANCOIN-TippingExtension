@@ -1,6 +1,6 @@
 {
 	"4chan": {
-		"watch": [ "reply", "dd-menu", "reply-to-thread", "dialog" ],
+		"watch": [ "postForm", "dd-menu", "reply-to-thread", "dialog" ],
 		"QR": [ "qrForm", 0, 0 ],
 		"reg": [ "postForm", 0, 0, 1, 0 ],
 		"menu": [ "post-menu", 0],
