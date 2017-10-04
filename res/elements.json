@@ -1,16 +1,30 @@
 {
 	"4chan": {
-		"watch": [ "postForm", "dd-menu", "reply-to-thread", "dialog" ],
+		"watch": [ "postForm", "reply", "dd-menu", "reply-to-thread", "dialog" ],
+		"actions": {
+			"reply": [ "setAddressFromLocalStorageIfChecked", [ "QR" ] ],
+			"reg": [ "setAddressFromLocalStorageIfChecked", [ "reg" ] ],
+			"dd-menu": [ "addButton", "getPostAddress", "false" ],
+			"reply-to-thread":  [ "setAddressFromLocalStorageIfChecked", [ "special", "QR" ] ],
+			"dialog": [ "addButton", "getPostAddress", "true" ]
+		},
 		"QR": [ "qrForm", 0, 0 ],
 		"reg": [ "postForm", 0, 0, 1, 0 ],
-		"menu": [ "post-menu", 0],
+		"menu": [ "post-menu", 0 ],
 		"special": {
-			"QR":  [ "qr", 1, 0, 2],
+			"QR":  [ "qr", 1, 0, 2 ],
 			"menu": [ "menu" ]
 		}
 	},
 	"8ch": {
-		"QR": "reply",
-		"menu": "dd-menu"
+		"watch": [ "post-menu", "post-table", "ui-draggable" ],
+		"actions": {
+			"ui-draggable": [ "setAddressFromLocalStorageIfChecked", [ "QR" ] ],
+			"post-table": [ "setAddressFromLocalStorageIfChecked", [ "reg" ] ],
+			"post-menu": [ "addButton", "getPostAddress", "false" ]
+		},
+		"QR": [ "quick-reply", 0, 1, 0, 0, 1, 0, 0 ],
+		"reg": [ "post-form-inner", 1, 2, 0, 0, 1, 0 ],
+		"menu": [ "filter-menu-hide", -1 ]
 	}
 }

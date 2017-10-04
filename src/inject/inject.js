@@ -1,5 +1,6 @@
 var site;
 var elementCheck;
+var postNum; //not ideal to make this global but since we're not passing arguments for whatever reason, we're doing this as well
 
 window.onload = function() {
   var readyStateCheckInterval = setInterval(function() {
@@ -46,10 +47,10 @@ function loadElements() {
  */
 function setAddressFromLocalStorageIfChecked(mode){
 
-  chrome.storage.local.get("insert",function(result){
+  chrome.storage.local.get("insert", function(result){
     if(result !== undefined && result.insert){
       //get the address from the storage
-      chrome.storage.local.get("address",function(result){
+      chrome.storage.local.get("address", function(result){
         if(result !== undefined && result.address !== undefined && result.address !== ""){
           setNameUsingAddress(result.address, mode);
         }
@@ -101,6 +102,20 @@ function addButton(postAddress, special) {
   var tmp = elementCheck[site];
   var a = document.getElementById(special ? tmp.special.menu[0] : tmp.menu[0]);
 
+  if(!special) {
+    $.each(tmp.menu, function(index, value) {
+      if (index === 0) {
+        return true; //continue
+      }
+      else if(value === -1) {
+        a = a.parentNode;
+      }
+      else {
+        a = a.children[value];
+      }
+    });
+  }
+
   var doHalt = false;
   $.each(a.children, function(index, value) {
     if(value.innerHTML.indexOf("Tip poster") != -1) { //id doesn't get set if vanilla
@@ -113,9 +128,6 @@ function addButton(postAddress, special) {
     return;
   }
 
-  if (!special) {
-    a = a.children[0];
-  }
   var b = document.createElement(special ? "a" : "li");
   if (special) {
     b.id = "tipPoster";
@@ -124,9 +136,9 @@ function addButton(postAddress, special) {
     b.onmouseout  = removeFocus;
     b.onmouseover = addFocus;
   }
-  b.innerHTML = "<img src='http://i.imgur.com/sh8aYT1.png' style='width:15px;vertical-align:middle'/>  Tip poster";
+  b.innerHTML = "<img src='https://i.imgur.com/sh8aYT1.png' style='width:15px;vertical-align:middle'/>  Tip poster";
   b.addEventListener("click", send4CHN);
-    a.appendChild(b);
+  a.appendChild(b);
 }
 
 /**
@@ -235,7 +247,7 @@ function send4CHN() {
       }).done(function(data, status, xhr) {
         //use a timeout so the loader has a chance to fire
         setTimeout(function(){
-          if (status.error !== null) { //TODO figure out status format
+          if (status.indexOf("error") != -1) {
             swal("Error!", "There was an error sending the coins", "error");
           }
           else {
@@ -254,9 +266,13 @@ function send4CHN() {
  * @return {string} postAddress
  */
 function getPostAddress(X) {
-  try {
+  if(site == "8ch") {
+    return addr8ch(); //necessary, weird layout on the site
+  }
+
+  try { //TODO refactor for cross chan
     var tmp = elementCheck[site];
-    var postNum = document.getElementById(X ? tmp.special.menu[0] : tmp.menu[0]);
+    postNum = document.getElementById(X ? tmp.special.menu[0] : tmp.menu[0]);
     if(X)
     {
       postNum = postNum.parentNode.parentNode.children[0].name;
@@ -273,6 +289,21 @@ function getPostAddress(X) {
   } catch(e) {
     return "";
   }
+}
+
+/**
+ * Gets the post address on 8ch.net
+ * @return {string} postAddress
+ */
+function addr8ch() { //TODO refactor
+  postNum = document.getElementsByClassName("post-btn-open")[0].parentNode.children[0];
+  var toRet = postNum.parentNode.children[3].children[0].innerText;
+  postNum = postNum.id;
+  var patt = /^\$(?:(?:4CHN)|(?:CHAN)):\s?.{34}$/mgi;
+  if (!patt.test(toRet)) {
+    toRet = "";
+  }
+  return toRet;
 }
 
 /**
@@ -307,19 +338,30 @@ function mutationHandler(mutationRecords) {
 function checkForCSS_Class(node, className) {
   if (node.nodeType === 1) {
     if (node.classList.contains(className)) {
-      switch (className) {
-        case "dialog":
-          addButton(getPostAddress(true), true);
-          break;
-        case "dd-menu":
-          addButton(getPostAddress(false), false);
-          break;
-        case "reply-to-thread":
-          setAddressFromLocalStorageIfChecked(elementCheck[site].special.QR);
-          break;
-        case "reply":
-          setAddressFromLocalStorageIfChecked(elementCheck[site].QR);
-          break;
+      var action = elementCheck[site].actions[className];
+      if (action === undefined || action === null) {
+        return;
+      }
+
+      var arg;
+      var arg2;
+
+      try { //check if it's an address argument
+        arg = elementCheck[site];
+        $.each(action[1], function(index, value) {
+          arg = arg[value];
+        });
+      }
+      catch(e) { //if not, it's a button arg
+        arg2 = action[2] == "true" ? true : false;
+        arg = window[action[1]](arg2);
+      }
+
+      if(arg2 === undefined) {
+        window[action[0]](arg);
+      }
+      else {
+        window[action[0]](arg, arg2);
       }
     }
   }
