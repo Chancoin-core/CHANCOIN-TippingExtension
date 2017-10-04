@@ -1,6 +1,6 @@
 {
   "name": "CHANCOIN : Tipping Extension",
-  "version": "0.0.4",
+  "version": "0.0.5",
   "manifest_version": 2,
   "description": "Simple tip extension created by the CHANCOIN Team.",
   "homepage_url": "http://chancoin.org",
@@ -18,7 +18,8 @@
     "https://boards.4chan.org/*",
     "http://boards.4chan.org/*",
     "http://localhost/*",
-    "http://127.0.0.1/*"
+    "http://127.0.0.1/*",
+    "storage"
   ],
   "content_scripts": [
     {
@@ -30,7 +31,7 @@
         "css/sweetalert.css"
       ],
       "js": [
-        "js/jquery-1.9.1.js",
+        "js/jquery-3.2.1.min.js",
         "js/bootstrap.min.js",
         "js/sweetalert.min.js",
         "src/inject/inject.js"
@@ -38,5 +39,5 @@
       "run_at":"document_end"
     }
   ],
-  "web_accessible_resources": ["html/modal.html","js/bootstrap.min.js","css/bootstrap.min.css"]
+  "web_accessible_resources": ["html/modal.html","js/bootstrap.min.js","css/bootstrap.min.css","js/modal.js"]
 }

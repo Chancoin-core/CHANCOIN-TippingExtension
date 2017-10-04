@@ -4,27 +4,53 @@
         <link rel="stylesheet" type="text/css" href="../css/bootstrap.min.css"></link>
 
         <link rel="stylesheet" type="text/css" href="../css/modal.css"></link>
+        <link rel="stylesheet" type="text/css" href="../css/sweetalert.css"></link>
 
         <!-- load javascript: jQuery 1.9.1 - http://jquery.com/ -->
-        <script type="text/javascript" src="../js/jquery-1.9.1.min.js"></script>
+        <script type="text/javascript" src="../js/jquery-3.2.1.min.js"></script>
 
         <!-- load javascript: Bootstrap v2.3.0 - http://twitter.github.com/bootstrap/ -->
         <script type="text/javascript" src="../js/bootstrap.min.js"></script>
 
+        <script type="text/javascript" src="../js/modal.js"></script>
+
         <link href="https://fonts.googleapis.com/css?family=Cabin" rel="stylesheet">
+
+        <link href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" rel="stylesheet" integrity="sha384-wvfXpqpZZVQGK6TAh5PVlGOfQNHSoD2xbE+QkPxCAFlNEevoEH3Sl0sibVcOQVnN" crossorigin="anonymous">
+        <script type="text/javascript" src="../js/sweetalert.min.js"></script>
 
     </head>
     <body>
       <div class="image">
-        <img id="main-image" src="../icons/modalBackground.jpg" class="center image" />
+        <img id="main-image" src="../icons/modalBackgroundLong.jpg" class="center image" />
       </div>
         <div id="main-outer" style="" class="main-outer">
-            <div id="main-inner" style="height: 288px">
+            <div id="main-inner" style="height: 388px">
                 <div id="main-title" class="center text header">CHANCOIN: Tip Extension</div>
 
-                <div id="main-about-text" class="center text bottom" style="vertical-align: bottom;">Visit the website </br>
-                  <a href="https://chancoin.org/" class="link">https://chancoin.org/</a>
+                <div class="center text bottom">
+                  <span style="font-size:22px">Settings</span>
+                  <div class="switch center text">
+                    <span class="settingLabel">Automatically Insert Address:</span>
+                    <input id="cmn-toggle-1" class="cmn-toggle cmn-toggle-round" type="checkbox">
+                    <label id="cmn-toggle-1-label" for="cmn-toggle-1" style="margin-left: 50px; float:left;"></label>
+                  </div>
+                </br>
+                  <div>
+                    <span class="settingLabel">Address to Insert:</span>
+                      <select id="sel1" style="width: 85%; margin-left:10px; padding:0" class="col-xs-11 form-control" >
+                      </select>
+                      <button id="addNewButton" type="button" style="margin-left:10px; margin-top:2px; padding-left:10; padding-top:6" class="btn btn-default col-xs-1">
+                        <i class="fa fa-plus" aria-hidden="true"></i>
+                      </button>
+
+
+                  </div>
+                  <!-- <div id="main-about-text" style="vertical-align: bottom;" class="center">Visit the website </br>
+                    <a href="https://chancoin.org/" class="link">https://chancoin.org/</a>
+                  </div> -->
                 </div>
+
             </div>
         </div>
 

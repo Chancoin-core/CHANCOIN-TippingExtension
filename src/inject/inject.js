@@ -1,4 +1,4 @@
-chrome.extension.sendMessage({}, function(response) {
+window.onload = function() {
   var readyStateCheckInterval = setInterval(function() {
     if (document.readyState === "complete") {
       clearInterval(readyStateCheckInterval);
@@ -11,21 +11,75 @@ chrome.extension.sendMessage({}, function(response) {
       };
 
       myObserver.observe (document, obsConfig);
+
+      //Set the classic original form name now as its already loaded in the DOM
+      setAddressFromLocalStorageIfChecked(fourChanVanilla);
     }
   }, 10);
-});
+};
+
+var fourChanVanillaQR = 0;
+var fourChanXQR = 1;
+var fourChanVanilla = 2;
+
+/**
+ * Sets the name field with the passed in wallet address. This method adds the "$4CHN:" prefix
+ * @param {int} mode determines where the method should look for the name field
+ */
+function setAddressFromLocalStorageIfChecked(mode){
+
+  chrome.storage.local.get("insert",function(result){
+    if(result !== undefined && result.insert){
+      //get the address from the storage
+      chrome.storage.local.get("address",function(result){
+        if(result !== undefined && result.address !== undefined && result.address !== ""){
+          setNameUsingAddress(result.address, mode);
+        }
+        else{
+          console.log("No Address Found");
+          return null;
+        }
+      });
+    }
+    else {
+      return null;
+    }
+  });
+
+}
+
+/**
+ * Sets the name field with the passed in wallet address. This method adds the "$4CHN:" prefix
+ * @param {string} addressToSet address that will be used
+ * @param {string} mode determines where the method should look for the name field
+ * @return void
+ */
+function setNameUsingAddress(addressToSet, mode){
+  var formattedAddress = "$4CHN:" + addressToSet;
+  var tmp;
+
+  if(mode === fourChanXQR) {
+    tmp = document.getElementById("qr").children[1].children[0].children[2];
+  } else if(mode === fourChanVanillaQR){
+    tmp = document.getElementById("qrForm").children[0].children[0];
+  } else if(mode === fourChanVanilla){
+    tmp = document.getElementById("postForm").children[0].children[0].children[1].children[0];
+  }
+  tmp.value = formattedAddress;
+}
 
 /**
  * Adds the tip poster button to the menu.
  * Specific for vanilla 4chan compatibility
  * @return void
  */
-function addButton() {
+function addButton(postAddress) {
+  postAddress = postAddress.toLowerCase();
   // TODO Refactor this into a predicate
-  if( getPostAddress().toLowerCase().startsWith("$4chn:") ||
-      getPostAddress().toLowerCase().startsWith("$4CHN:") ||
-      getPostAddress().toLowerCase().startsWith("$CHAN:") ||
-      getPostAddress().toLowerCase().startsWith("$chan:") ) {
+  if( postAddress.startsWith("$4chn:") ||
+      postAddress.startsWith("$4CHN:") ||
+      postAddress.startsWith("$CHAN:") ||
+      postAddress.startsWith("$chan:") ) {
 
     var a = document.getElementById("post-menu").children[0];
     var b = document.createElement("li");
@@ -40,12 +94,13 @@ function addButton() {
  * Specific for 4chanX compatibility
  * @return void
  */
-function addButtonX() {
+function addButtonX(postAddress) {
+  postAddress = postAddress.toLowerCase();
   // TODO Refactor this into a predicate (and de-dupe it if possible)
-  if( getPostAddressX().toLowerCase().startsWith("$4chn:") ||
-      getPostAddressX().toLowerCase().startsWith("$4CHN:") ||
-      getPostAddressX().toLowerCase().startsWith("$CHAN:") ||
-      getPostAddressX().toLowerCase().startsWith("$chan:") ) {
+  if( postAddress.startsWith("$4chn:") ||
+      postAddress.startsWith("$4CHN:") ||
+      postAddress.startsWith("$CHAN:") ||
+      postAddress.startsWith("$chan:") ) {
     if(document.getElementById("tipPoster") === null) {
 
       var a = document.getElementById("menu");
@@ -127,7 +182,7 @@ function addressFromPostName(postName) {
  */
 function send4CHN(address, amount) {
   var postAddress = getPostAddress();
-  if(postAddress === null){
+  if(postAddress === ""){
     postAddress = getPostAddressX();
   }
 
@@ -200,10 +255,7 @@ function getPostAddress() {
     postNum = document.getElementById("post-menu").children[0].children[0].getAttribute("data-id");
     return document.getElementById("pc" + document.getElementById("post-menu").children[0].children[0].getAttribute("data-id")).getElementsByClassName("name")[1].innerText;
   } catch(e) {
-    if (e instanceof TypeError) {
-      // statements to handle TypeError exceptions
-      return null;
-    }
+    return "";
   }
 }
 
@@ -213,8 +265,12 @@ function getPostAddress() {
  * @return {string} postAddress
  */
 function getPostAddressX(){
-  postNum = document.getElementById("menu").parentNode.parentNode.children[0].name;
-  return document.getElementById("menu").parentNode.parentNode.getElementsByClassName("name")[0].innerText;
+  try {
+    postNum = document.getElementById("menu").parentNode.parentNode.children[0].name;
+    return document.getElementById("menu").parentNode.parentNode.getElementsByClassName("name")[0].innerText;
+  } catch(e) {
+    return "";
+  }
 }
 
 /**
@@ -228,28 +284,47 @@ function mutationHandler (mutationRecords) {
       for (var J = 0, L = mutation.addedNodes.length;  J < L;  ++J) {
         checkForCSS_Class (mutation.addedNodes[J], "dd-menu");
         checkForCSS_Class (mutation.addedNodes[J], "dialog");
+        checkForCSS_Class (mutation.addedNodes[J], "reply-to-thread");
+        checkForCSS_Class (mutation.addedNodes[J], "reply");
       }
     }
     else if (mutation.type == "attributes") {
       checkForCSS_Class (mutation.target, "dd-menu");
+      checkForCSS_Class (mutation.target, "reply-to-thread");
       checkForCSS_Class (mutation.target, "dialog");
+      checkForCSS_Class (mutation.target, "reply");
+
     }
-  } );
+  });
 }
 
 /**
- * Adds two numbers
- * @param {Number} a
- * @param {Number} b
- * @return {Number} sum
+ * Checks the passed in node for the passed in CSS class name.
+ * Depending on the class name, different actions will be carried out.
+ * @param {node} node to check
+ * @param {string} class name to check
+ * @return void
  */
 function checkForCSS_Class (node, className) {
   if (node.nodeType === 1) {
     if (node.classList.contains (className) ) {
-      if(className === "dialog"){
-        addButtonX();
-      }else{
-        addButton();
+      switch (className) {
+        case "dialog":
+          // Adding a button with 4ChanX
+          addButtonX(getPostAddressX());
+          break;
+        case "dd-menu":
+          // adding a button with vanilla 4chan
+          addButton(getPostAddress());
+          break;
+        case "reply-to-thread":
+          // adding the wallet address to the name field with 4chanX
+          setAddressFromLocalStorageIfChecked(fourChanXQR);
+          break;
+        case "reply":
+          // adding the wallet address to the name field with vanilla 4chan
+          setAddressFromLocalStorageIfChecked(fourChanVanillaQR);
+          break;
       }
     }
   }

@@ -1,5 +1,5 @@
 # CHANCOIN: Tipping Extension
-A ChanCoin Chrome browser extension for 4chan
+A ChanCoin Chrome and Firefox browser extension for 4chan.
 ## General Information
 This extension adds a tip button to 4chan posts with the following name format: `<PREFIX>:address` where `<PREFIX>` is one of:
 * `$4chn`
@@ -8,6 +8,11 @@ This extension adds a tip button to 4chan posts with the following name format: 
 * `$chan`
 
 If you want to receive tips through this extension, you MUST set your name on 4chan to this format. For example: `$4CHN:CbkMmgphehVHQo27tWEzNzLCbEKkwaBwwL`
+
+As of version 0.0.5, the name field will automatically insert into the name field. This feature can be toggled off via the popup modal.
+You can also select the address that you would like the extension to automatically insert or generate a new one. This requires the wallet to be setup and running.
+
+![Popup Modal](https://i.imgur.com/KIqDDyM.png)
 
 Once installed, correctly-formatted 4chan posts will have an additional "Tip poster" button in their dropdown box.
 
@@ -40,11 +45,12 @@ Save this file as `chancoin.conf`.
 If the wallet is currently running, it will need to be restarted before the changes take effect.
 
 ### Step 2
-The next step is to install the extension. 
+The next step is to install the extension.
 
-To do this, navigate to `chrome://extensions/` within chrome.
-Download the packed [Chrome Extension](https://github.com/VladimirPewtin/CHANCOIN-TippingExtension/releases/download/0.0.2/CHANCOIN_TippingExtension.crx)
-and drag the downloaded file into the chrome extensions window. After accepting the permissions, the extension will be installed and ready to go.
+To do this, navigate to `chrome://extensions/` within chrome or `about:addons` in firefox.
+Download the packed [Chrome Extension](https://github.com/VladimirPewtin/CHANCOIN-TippingExtension/releases/download/0.0.5/CHANCOIN_TippingExtension.crx)
+or packed [FireFox Extension](https://github.com/VladimirPewtin/CHANCOIN-TippingExtension/releases/download/0.0.5/CHANCOIN_TippingExtension.xpi)
+and drag the downloaded file into your browsers extensions / addon window. After accepting the permissions, the extension will be installed and ready to go.
 ___
 
 If you like what I do, feel free to donate!
