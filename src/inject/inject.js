@@ -34,7 +34,7 @@ function loadElements() {
     var xhr = new XMLHttpRequest();
     xhr.open("GET", chrome.extension.getURL('/res/elements.json'), false);
     xhr.send();
-    while(xhr.readyState != 4 || xhr.status != 200)
+    while(xhr.readyState !== 4 || xhr.status !== 200)
     {
         ;; //TODO set a sanity var so we don't loop forever
     }
@@ -46,7 +46,6 @@ function loadElements() {
  * @param {int} mode determines where the method should look for the name field
  */
 function setAddressFromLocalStorageIfChecked(mode){
-
   chrome.storage.local.get("insert", function(result){
     if(result !== undefined && result.insert){
       //get the address from the storage
@@ -74,14 +73,22 @@ function setAddressFromLocalStorageIfChecked(mode){
  * @return void
  */
 function setNameUsingAddress(addressToSet, mode){
-  var prefix = elementCheck[site].limit == "true" ? "$" : "$4CHN:";
+  var prefix = elementCheck[site].limit ? "$" : "$4CHN:";
   var formattedAddress = prefix + addressToSet;
   var elem;
 
+  if (typeof mode[0] != "string") { //weird stuff
+    mode[0] = mode[0][0];
+  }
+
   elem = document.getElementById(mode[0]);
+
   $.each(mode, function(index, value) {
     if (index === 0) {
       return true; //continue
+    }
+    else if (value === -1) {
+      elem = elem.parentNode;
     }
     else {
       elem = elem.children[value];
@@ -95,7 +102,10 @@ function setNameUsingAddress(addressToSet, mode){
  * Adds the tip poster button to the menu.
  * @return void
  */
-function addButton(postAddress, special) {
+function addButton(args) {
+  var postAddress = args[0];
+  var special = args[1];
+
   if (postAddress === "") {
     return;
   }
@@ -108,7 +118,7 @@ function addButton(postAddress, special) {
       if (index === 0) {
         return true; //continue
       }
-      else if(value === -1) {
+      else if (value === -1) {
         a = a.parentNode;
       }
       else {
@@ -266,11 +276,7 @@ function send4CHN() {
  * Searchs the elements for the posters address.
  * @return {string} postAddress
  */
-function getPostAddress(X) {
-  if(site == "8ch") {
-    return addr8ch(); //necessary, weird layout on the site
-  }
-
+function getPostAddress(X) { //TODO special autodetection
   try { //TODO refactor for cross chan
     var tmp = elementCheck[site];
     postNum = document.getElementById(X ? tmp.special.menu[0] : tmp.menu[0]);
@@ -339,30 +345,41 @@ function mutationHandler(mutationRecords) {
 function checkForCSS_Class(node, className) {
   if (node.nodeType === 1) {
     if (node.classList.contains(className)) {
-      var action = elementCheck[site].actions[className];
-      if (action === undefined || action === null) {
-        return;
-      }
+      var actions = elementCheck[site].actions;
+      for (var action in actions) {
+        if (!actions.hasOwnProperty(action)) {
+          continue;
+        }
 
-      var arg;
-      var arg2;
+        var args;
 
-      try { //check if it's an address argument
-        arg = elementCheck[site];
-        $.each(action[1], function(index, value) {
-          arg = arg[value];
-        });
-      }
-      catch(e) { //if not, it's a button arg
-        arg2 = action[2] == "true" ? true : false;
-        arg = window[action[1]](arg2);
-      }
+        args = actions[action][className];
+        if (args === undefined || args === null) {
+          continue;
+        }
 
-      if(arg2 === undefined) {
-        window[action[0]](arg);
-      }
-      else {
-        window[action[0]](arg, arg2);
+        if (typeof args === "string") {
+          args = [elementCheck[site][args]];
+        }
+        else {
+          try {
+            var tmp = window[args[0]](args[1]);
+            args = [tmp, args[1]];
+          }
+          catch (e) {
+            var tmp = elementCheck[site];
+            $.each(args, function(index, value) {
+              if (index === 0) {
+                args = tmp[value];
+              }
+              else {
+                args = args[value];
+              }
+            });
+          }
+        }
+
+        window[action](args);
       }
     }
   }

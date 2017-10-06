@@ -1,32 +1,54 @@
+/*
+ * Modifier info:
+ * ;L - local
+ * ;P - parent*
+ * * Put this in a child object and it pulls the parent's value of the key with the name you supplied
+ * ;A - attribute
+ * ;C - class
+ * ;I - ID
+ * ;D - delayed**
+ * ** Delays the evaluation of the expression until child value (currently only postNum and addr, addr being the child), evaluates itself
+ *
+ * Modifiers are additive
+ *
+ * \\+;  after string - concatenation with next string in array
+ * 
+ * positive number - child with that index
+ * -1 - parentNode
+ * number after | in string with ;C identifier - index for picking from the returned element collection
+*/
+
 {
 	"4chan": {
-		"limit": "false",
-		"watch": [ "postForm", "reply", "dd-menu", "reply-to-thread", "dialog" ],
+		"limit": false,
+		"watch": [ "reply", "dd-menu", "reply-to-thread", "dialog" ],
 		"actions": {
-			"reply": [ "setAddressFromLocalStorageIfChecked", [ "QR" ] ],
-			"reg": [ "setAddressFromLocalStorageIfChecked", [ "reg" ] ],
-			"dd-menu": [ "addButton", "getPostAddress", "false" ],
-			"reply-to-thread":  [ "setAddressFromLocalStorageIfChecked", [ "special", "QR" ] ],
-			"dialog": [ "addButton", "getPostAddress", "true" ]
+			"setAddressFromLocalStorageIfChecked": { "reply": "QR", "reply-to-thread": [ "special", "QR" ] },
+			"addButton": { "dd-menu": [ "getPostAddress", false ], "dialog": [ "getPostAddress", true ] }
 		},
 		"QR": [ "qrForm", 0, 0 ],
 		"reg": [ "postForm", 0, 0, 1, 0 ],
 		"menu": [ "post-menu", 0 ],
+		"postNum": [ "post-menu", 0, 0, ";A:data-id" ], 
+		"addr": [ ";I:pi\\+", ";L:postNum", 1, 0, ";A:innerText" ],
 		"special": {
 			"QR":  [ "qr", 1, 0, 2 ],
-			"menu": [ "menu" ]
+			"menu": [ "menu" ],
+			"postNum": [ "menu", -1, -1, 0, ";A:name" ],
+			"addr": ";P:addr"
 		}
 	},
 	"8ch": {
 		"limit": "true",
 		"watch": [ "post-menu", "post-table", "ui-draggable" ],
 		"actions": {
-			"ui-draggable": [ "setAddressFromLocalStorageIfChecked", [ "QR" ] ],
-			"post-table": [ "setAddressFromLocalStorageIfChecked", [ "reg" ] ],
-			"post-menu": [ "addButton", "getPostAddress", "false" ]
+			"setAddressFromLocalStorageIfChecked": { "ui-draggable": "QR", "post-table": "reg" },
+			"addButton": { "post-menu": [ "getPostAddress", false ] }
 		},
 		"QR": [ "quick-reply", 0, 1, 0, 0, 1, 0, 0 ],
 		"reg": [ "post-form-inner", 1, 2, 0, 0, 1, 0 ],
-		"menu": [ "filter-menu-hide", -1 ]
+		"menu": [ "filter-menu-hide", -1 ],
+		"postNum": [ ";C:post-btn-open|0", -1, 0, ";DA:id" ],
+		"addr": [ ";L:postNum", -1, 3, 0, ";A:innerText" ]
 	}
 }
