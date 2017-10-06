@@ -1,5 +1,6 @@
 {
 	"4chan": {
+		"limit": "false",
 		"watch": [ "postForm", "reply", "dd-menu", "reply-to-thread", "dialog" ],
 		"actions": {
 			"reply": [ "setAddressFromLocalStorageIfChecked", [ "QR" ] ],
@@ -17,6 +18,7 @@
 		}
 	},
 	"8ch": {
+		"limit": "true",
 		"watch": [ "post-menu", "post-table", "ui-draggable" ],
 		"actions": {
 			"ui-draggable": [ "setAddressFromLocalStorageIfChecked", [ "QR" ] ],

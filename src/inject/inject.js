@@ -74,7 +74,8 @@ function setAddressFromLocalStorageIfChecked(mode){
  * @return void
  */
 function setNameUsingAddress(addressToSet, mode){
-  var formattedAddress = "$4CHN:" + addressToSet;
+  var prefix = elementCheck[site].limit == "true" ? "$" : "$4CHN:";
+  var formattedAddress = prefix + addressToSet;
   var elem;
 
   elem = document.getElementById(mode[0]);
@@ -299,7 +300,7 @@ function addr8ch() { //TODO refactor
   postNum = document.getElementsByClassName("post-btn-open")[0].parentNode.children[0];
   var toRet = postNum.parentNode.children[3].children[0].innerText;
   postNum = postNum.id;
-  var patt = /^\$(?:(?:4CHN)|(?:CHAN)):\s?.{34}$/mgi;
+  var patt = /^\$C.{33}$/mgi;
   if (!patt.test(toRet)) {
     toRet = "";
   }
