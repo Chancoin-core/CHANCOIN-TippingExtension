@@ -19,6 +19,8 @@
     "http://boards.4chan.org/*",
     "https://8ch.net/*",
     "http://8ch.net/*",
+    "https://2ch.hk/*",
+    "http://2ch.hk/*",
     "http://localhost/*",
     "http://127.0.0.1/*",
     "storage"
@@ -29,7 +31,9 @@
         "https://boards.4chan.org/*",
         "http://boards.4chan.org/*",
         "https://8ch.net/*",
-        "http://8ch.net/*"
+        "http://8ch.net/*",
+        "https://2ch.hk/*",
+        "http://2ch.hk/*"
       ],
       "css" : [
         "res/css/sweetalert.css"
@@ -38,6 +42,8 @@
         "res/js/jquery-3.2.1.min.js",
         "res/js/bootstrap.min.js",
         "res/js/sweetalert.min.js",
+        "res/js/minify.json.js",
+        "res/js/overlap/jquery.overlaps.js",
         "src/inject/inject.js"
       ],
       "run_at":"document_end"

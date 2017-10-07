@@ -5,9 +5,9 @@ var postNum; //not ideal to make this global but since we're not passing argumen
 window.onload = function() {
   var readyStateCheckInterval = setInterval(function() {
     if (document.readyState === "complete") {
-      elementCheck = JSON.parse(loadElements());
+      elementCheck = JSON.parse(JSON.minify(loadElements()));
 
-      var patt = /https?:\/\/(?:.*\.)?(.+)\.(?:(?:org)|(?:net)).*/gi;
+      var patt = /https?:\/\/(?:.*\.)?(.+)\..{2,3}.*/gi;
       site = patt.exec(window.location.href)[1];
 
       clearInterval(readyStateCheckInterval);
@@ -29,6 +29,7 @@ window.onload = function() {
 
 /**
  * Gets the json file containing element definitions for chans
+ * @return {string} responseText
  */
 function loadElements() {
     var xhr = new XMLHttpRequest();
@@ -39,6 +40,80 @@ function loadElements() {
         ;; //TODO set a sanity var so we don't loop forever
     }
     return xhr.responseText;
+}
+
+function parseValue(val, base, special) {
+  var patt = /^(?:\\\+)?;([LPAFCIN]+):(.+)$/g;
+  if (typeof val == "string") {
+    var match = patt.exec(val);
+    var mod = match[1];
+    var v = match[2];
+
+    if (val.indexOf("\\+") !== -1) {
+      var tmp = base + parseValue(val.split('+')[1], document, special);
+      return parseValue(";I:" + tmp, document, special);
+    }
+
+    if (v === null || v === undefined) {
+      return undefined;
+    }
+
+    var toRet;
+    mod.split('').forEach(function(value) {
+      switch (value) {
+        case 'N':
+          toRet = v;
+          break;
+        case 'L':
+          var tmp = elementCheck[site];
+          if (special) {
+            tmp = tmp["special"];
+          }
+          tmp = tmp[v];
+          if (tmp === null || tmp === undefined) {
+            toRet = undefined;
+          }
+          tmp = parseValue(tmp, base, special);
+          toRet = tmp;
+          break;
+        case 'P':
+          toRet = parseValue(elementCheck[site][v], document, special); //for now, this is sufficient; should be refactored though
+          break;
+        case 'A':
+          toRet = base.getAttribute(v);
+          if (toRet === null) {
+            toRet = base[v];
+          }
+          break;
+        case 'C':
+          var tmp = v.split("|");
+          toRet = document.getElementsByClassName(tmp[0])[tmp[1]];
+          break;
+        case 'I':
+          toRet = document.getElementById(v);
+          break;
+      }
+    });
+    return toRet;
+  }
+  else if (typeof val == "number") {
+    if (val === -1) {
+      return base.parentNode;
+    }
+    else {
+      return base.children[val];
+    }
+  }
+  else {
+    var toRet = base;
+    $.each(val, function(index, value) {
+      var tmp = parseValue(value, toRet, special);
+      if (tmp !== null && tmp !== undefined) {
+        toRet = tmp;
+      }
+    });
+    return toRet;
+  }
 }
 
 /**
@@ -75,25 +150,12 @@ function setAddressFromLocalStorageIfChecked(mode){
 function setNameUsingAddress(addressToSet, mode){
   var prefix = elementCheck[site].limit ? "$" : "$4CHN:";
   var formattedAddress = prefix + addressToSet;
-  var elem;
-
+ 
   if (typeof mode[0] != "string") { //weird stuff
-    mode[0] = mode[0][0];
+    mode = mode[0];
   }
 
-  elem = document.getElementById(mode[0]);
-
-  $.each(mode, function(index, value) {
-    if (index === 0) {
-      return true; //continue
-    }
-    else if (value === -1) {
-      elem = elem.parentNode;
-    }
-    else {
-      elem = elem.children[value];
-    }
-  });
+  var elem = parseValue(mode, document, true);
 
   elem.value = formattedAddress;
 }
@@ -111,21 +173,7 @@ function addButton(args) {
   }
 
   var tmp = elementCheck[site];
-  var a = document.getElementById(special ? tmp.special.menu[0] : tmp.menu[0]);
-
-  if(!special) {
-    $.each(tmp.menu, function(index, value) {
-      if (index === 0) {
-        return true; //continue
-      }
-      else if (value === -1) {
-        a = a.parentNode;
-      }
-      else {
-        a = a.children[value];
-      }
-    });
-  }
+  var a = parseValue(special ? tmp.special.menu : tmp.menu, document, special);
 
   var doHalt = false;
   $.each(a.children, function(index, value) {
@@ -273,22 +321,18 @@ function send4CHN() {
 }
 
 /**
- * Searchs the elements for the posters address.
+ * Searches the elements for the poster's address.
  * @return {string} postAddress
  */
 function getPostAddress(X) { //TODO special autodetection
-  try { //TODO refactor for cross chan
+  try {
     var tmp = elementCheck[site];
-    postNum = document.getElementById(X ? tmp.special.menu[0] : tmp.menu[0]);
-    if(X)
-    {
-      postNum = postNum.parentNode.parentNode.children[0].name;
+    postNum = parseValue(X ? tmp.special.postNum : tmp.postNum, document, X);
+    var toRet = parseValue(X ? tmp.special.addr : tmp.addr, document, X);
+    if (typeof postNum != "string") {
+      postNum = postNum.id;
     }
-    else {
-      postNum = postNum.children[0].children[0].getAttribute("data-id");
-    }
-    var toRet = document.getElementById("pi" + postNum).children[1].children[0].innerText;
-    var patt = /^\$(?:(?:4CHN)|(?:CHAN)):\s?.{34}$/mgi;
+    var patt = /^\$(?:(?:(?:4CHN)|(?:CHAN)):)?\s?.{34}$/mgi;
     if (!patt.test(toRet)) {
       toRet = "";
     }
@@ -299,27 +343,12 @@ function getPostAddress(X) { //TODO special autodetection
 }
 
 /**
- * Gets the post address on 8ch.net
- * @return {string} postAddress
- */
-function addr8ch() { //TODO refactor
-  postNum = document.getElementsByClassName("post-btn-open")[0].parentNode.children[0];
-  var toRet = postNum.parentNode.children[3].children[0].innerText;
-  postNum = postNum.id;
-  var patt = /^\$C.{33}$/mgi;
-  if (!patt.test(toRet)) {
-    toRet = "";
-  }
-  return toRet;
-}
-
-/**
  * Adds two numbers
  * @param {mutationRecords} mutationRecords
  * @return void
  */
 function mutationHandler(mutationRecords) {
-  mutationRecords.forEach (function(mutation) {
+  mutationRecords.forEach(function(mutation) {
     if (mutation.type == "childList" && typeof mutation.addedNodes  == "object" && mutation.addedNodes.length) {
       for (var J = 0, L = mutation.addedNodes.length;  J < L;  ++J) {
         $.each(elementCheck[site].watch, function(index, value) {

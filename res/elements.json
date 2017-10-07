@@ -4,14 +4,15 @@
  * ;P - parent*
  * * Put this in a child object and it pulls the parent's value of the key with the name you supplied
  * ;A - attribute
+ * ;F - function call on the element before
  * ;C - class
  * ;I - ID
- * ;D - delayed**
- * ** Delays the evaluation of the expression until child value (currently only postNum and addr, addr being the child), evaluates itself
+ * ;N - regular string for use with \\+
  *
  * Modifiers are additive
  *
- * \\+;  after string - concatenation with next string in array
+ * \\+ before string - concatenation with string before in array
+ * ^ in between two strings - string after are arguments for the function, separated by ˇ
  * 
  * positive number - child with that index
  * -1 - parentNode
@@ -21,34 +22,47 @@
 {
 	"4chan": {
 		"limit": false,
-		"watch": [ "reply", "dd-menu", "reply-to-thread", "dialog" ],
+		"watch": [ "reply", "dd-menu", "reply-to-thread", "menu-button" ],
 		"actions": {
 			"setAddressFromLocalStorageIfChecked": { "reply": "QR", "reply-to-thread": [ "special", "QR" ] },
-			"addButton": { "dd-menu": [ "getPostAddress", false ], "dialog": [ "getPostAddress", true ] }
+			"addButton": { "dd-menu": [ "getPostAddress", false ], "menu-button": [ "getPostAddress", true ] }
 		},
-		"QR": [ "qrForm", 0, 0 ],
-		"reg": [ "postForm", 0, 0, 1, 0 ],
-		"menu": [ "post-menu", 0 ],
-		"postNum": [ "post-menu", 0, 0, ";A:data-id" ], 
-		"addr": [ ";I:pi\\+", ";L:postNum", 1, 0, ";A:innerText" ],
+		"QR": [ ";I:qrForm", 0, 0 ],
+		"reg": [ ";I:postForm", 0, 0, 1, 0 ],
+		"menu": [ ";I:post-menu", 0 ],
+		"postNum": [ ";L:menu", 0, 0, ";A:data-id" ], 
+		"addr": [ ";N:pi", "\\+;L:postNum", 1, 0, ";A:innerText" ],
 		"special": {
-			"QR":  [ "qr", 1, 0, 2 ],
-			"menu": [ "menu" ],
-			"postNum": [ "menu", -1, -1, 0, ";A:name" ],
+			"QR":  [ ";I:qr", 1, 0, 2 ],
+			"menu": ";I:menu",
+			"postNum": [ ";L:menu", -1, -1, 0, ";A:name" ],
 			"addr": ";P:addr"
 		}
 	},
 	"8ch": {
-		"limit": "true",
+		"limit": true,
 		"watch": [ "post-menu", "post-table", "ui-draggable" ],
 		"actions": {
 			"setAddressFromLocalStorageIfChecked": { "ui-draggable": "QR", "post-table": "reg" },
 			"addButton": { "post-menu": [ "getPostAddress", false ] }
 		},
-		"QR": [ "quick-reply", 0, 1, 0, 0, 1, 0, 0 ],
-		"reg": [ "post-form-inner", 1, 2, 0, 0, 1, 0 ],
-		"menu": [ "filter-menu-hide", -1 ],
-		"postNum": [ ";C:post-btn-open|0", -1, 0, ";DA:id" ],
+		"QR": [ ";I:quick-reply", 0, 1, 0, 0, 1, 0, 0 ],
+		"reg": [ ";I:post-form-inner", 1, 2, 0, 0, 1, 0 ],
+		"menu": [ ";I:filter-menu-hide", -1 ],
+		"postNum": [ ";C:post-btn-open|0", -1, 0 ],
 		"addr": [ ";L:postNum", -1, 3, 0, ";A:innerText" ]
+	},
+	"2ch": {
+		"limit": false,
+		"watch": [ "norm-reply", "qr-reply", "modal" ],
+		"actions": {
+			"setAddressFromLocalStorageIfChecked": { "qr-reply": "QR", "norm-reply": "reg" },
+			"addButton": { "modal": [ "getPostAddress", false ] }
+		},
+		"QR": ";I:qr-e-mail",
+		"reg": ";I:name",
+		"menu": ";I:ABU-select",
+		"postNum": [ ";L:menu", ";F:overlaps^;C:post-wrapper", 0, ";A:data-num" ],
+		"addr": [ ";N:post-details-", "\\+;L:postNum", 1, ";A:innerText" ]
 	}
 }
