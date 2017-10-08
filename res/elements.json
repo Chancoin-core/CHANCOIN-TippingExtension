@@ -6,6 +6,8 @@
  * ;A - attribute
  * ;F - function call on the element before
  * ;W - perform operation on window, not relative base; pairs only with F
+ * ;B - set specific base
+ * ;R - perform on relative base, for operations that normally operate on document
  * ;C - class
  * ;I - ID
  * ;N - regular string for use with \\+
@@ -14,7 +16,8 @@
  *
  * \\+ before string - concatenation with string before in array
  * ^ in between two strings - string after are arguments for the function, separated by ˇ
- * ~ at the end of a string: either do the string or the next string/array, depending on success
+ * ~ at the end of a string - either do the string or the next string/array, depending on success
+ * <string> after ~ - condition in regex, optional
  * 
  * positive number - child with that index
  * -1 - parentNode
@@ -64,7 +67,7 @@
 		"QR": ";I:qr-e-mail",
 		"reg": ";I:name",
 		"menu": ";I:ABU-select",
-		"postNum": [ ";FW:chkOverlap^;C:postˇ;L:menu", ";A:data-num~", [/*FINISH*/] ],
-		"addr": [ ";N:post-details-", "\\+;L:postNum", 1, ";A:innerText" ]
+		"postNum": [ ";FW:chkOverlap^;C:postˇ;L:menu", ";A:data-num~\\d+", [ ";CB:oppost|0", 0, 0, ";A:value" ] ],
+		"addr": [ ";N:post-details-", "\\+;L:postNum", ";RC:ananimas|0", ";A:innerText" ]
 	}
 }

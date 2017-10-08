@@ -43,11 +43,12 @@ function loadElements() {
 }
 
 function parseValue(val, base, special) {
-  var patt = /^(?:\\\+)?;([LPAFWCIN]+):(.+)$/g;
+  var patt = /^(?:\\\+)?;([LPAFWBRCIN]+):(.+)$/g;
   if (typeof val == "string") {
     var match = patt.exec(val);
     var mod = match[1];
     var v = match[2];
+    var useR = false;
 
     if (val.indexOf("\\+") !== -1) {
       var tmp = base + parseValue(val.split('+')[1], document, special);
@@ -56,6 +57,14 @@ function parseValue(val, base, special) {
 
     if (v === null || v === undefined) {
       return undefined;
+    }
+
+    if (v.indexOf('~') !== -1) {
+      v = v.split('~')[0];
+    }
+
+    if (mod.indexOf('R') !== -1) {
+      useR = true;
     }
 
     var toRet;
@@ -86,13 +95,13 @@ function parseValue(val, base, special) {
           break;
         case 'C':
           var tmp = v.split("|");
-          toRet = document.getElementsByClassName(tmp[0]);
+          toRet = (useR ? base : document).getElementsByClassName(tmp[0]);
           if (tmp.length > 1) {
             toRet = toRet[tmp[1]];
           }
           break;
         case 'I':
-          toRet = document.getElementById(v);
+          toRet = (useR ? base : document).getElementById(v);
           break;
         case 'F':
           var tmp = v.split('^');
@@ -119,10 +128,28 @@ function parseValue(val, base, special) {
   }
   else {
     var toRet = base;
-    $.each(val, function(index, value) { //TODO implement OR for fucking russians
+    $.each(val, function(index, value) {
+      var or = false;
+      if (typeof value == "string") {
+        or = value.indexOf('~') !== -1;
+        if (value.split(':')[0].indexOf('B') !== -1) {
+          toRet = parseValue(value, toRet, special);
+          return true;
+        }
+      }
       var tmp = parseValue(value, toRet, special);
+      if (or) {
+        var patt = new RegExp(value.split('~')[1], "gi");
+        if (!patt.test(tmp)) {
+          toRet = base;
+          return true;
+        }
+      }
       if (tmp !== null && tmp !== undefined) {
         toRet = tmp;
+        if (or) {
+          return false;
+        }
       }
     });
     return toRet;
@@ -218,7 +245,7 @@ function addButton(args) {
   }
 
   var b = document.createElement(type);
-  if (special) {
+  if (type == "a") {
     b.id = "tipPoster";
     b.className += ' entry';
     b.click = "send4CHN()";
@@ -235,10 +262,10 @@ function addButton(args) {
  * @return void
  */
 function clearFocusedClassFromMenu(){
-  var childNodes = document.getElementById("menu").children;
+  var childNodes = document.getElementById("menu").children; //TODO refactor
 
   for (var J = 0, L = childNodes.length;  J < L;  ++J) {
-    if(childNodes[J].className.includes("focused")){
+    if (childNodes[J].className.includes("focused")){
       setFocus(childNodes[J], false);
     }
   }
@@ -410,13 +437,10 @@ function checkForCSS_Class(node, className) {
       }
 
       var args;
-
       args = actions[action][className];
       if (args === undefined || args === null) {
         continue;
       }
-
-      console.log(args);
 
       if (typeof args === "string") {
         args = [elementCheck[site][args]];
@@ -424,7 +448,11 @@ function checkForCSS_Class(node, className) {
       else {
         try {
           var tmp = window[args[0]](args[1]);
-          args = [tmp, args[1]];
+          var tmp2 = [tmp];
+          $.each(args.slice(1, args.length), function(index, value) {
+            tmp2.push(value);
+          });
+          args = tmp2;
         }
         catch (e) {
           var tmp = elementCheck[site];
