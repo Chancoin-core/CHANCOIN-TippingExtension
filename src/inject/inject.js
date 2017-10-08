@@ -7,7 +7,7 @@ window.onload = function() {
     if (document.readyState === "complete") {
       elementCheck = JSON.parse(JSON.minify(loadElements()));
 
-      var patt = /https?:\/\/(?:.*\.)?(.+)\..{2,3}.*/gi;
+      var patt = /https?:\/\/(?:.*\.)?(.+)\.\D{2,3}\/.*/gi;
       site = patt.exec(window.location.href)[1];
 
       clearInterval(readyStateCheckInterval);
@@ -35,7 +35,7 @@ function loadElements() {
     var xhr = new XMLHttpRequest();
     xhr.open("GET", chrome.extension.getURL('/res/elements.json'), false);
     xhr.send();
-    while(xhr.readyState !== 4 || xhr.status !== 200)
+    while (xhr.readyState !== 4 || xhr.status !== 200)
     {
         ;; //TODO set a sanity var so we don't loop forever
     }
@@ -43,7 +43,7 @@ function loadElements() {
 }
 
 function parseValue(val, base, special) {
-  var patt = /^(?:\\\+)?;([LPAFCIN]+):(.+)$/g;
+  var patt = /^(?:\\\+)?;([LPAFWCIN]+):(.+)$/g;
   if (typeof val == "string") {
     var match = patt.exec(val);
     var mod = match[1];
@@ -73,8 +73,7 @@ function parseValue(val, base, special) {
           if (tmp === null || tmp === undefined) {
             toRet = undefined;
           }
-          tmp = parseValue(tmp, base, special);
-          toRet = tmp;
+          toRet = parseValue(tmp, base, special);
           break;
         case 'P':
           toRet = parseValue(elementCheck[site][v], document, special); //for now, this is sufficient; should be refactored though
@@ -87,10 +86,24 @@ function parseValue(val, base, special) {
           break;
         case 'C':
           var tmp = v.split("|");
-          toRet = document.getElementsByClassName(tmp[0])[tmp[1]];
+          toRet = document.getElementsByClassName(tmp[0]);
+          if (tmp.length > 1) {
+            toRet = toRet[tmp[1]];
+          }
           break;
         case 'I':
           toRet = document.getElementById(v);
+          break;
+        case 'F':
+          var tmp = v.split('^');
+          var args = tmp[1].split('ˇ');
+          for (var i = 0; i < args.length; i++) {
+            args[i] = parseValue(args[i], base, special);
+          }
+          var b = mod.indexOf('W') !== -1 ? window : base;
+          toRet = b[tmp[0]](args);
+          break;
+        default:
           break;
       }
     });
@@ -106,7 +119,7 @@ function parseValue(val, base, special) {
   }
   else {
     var toRet = base;
-    $.each(val, function(index, value) {
+    $.each(val, function(index, value) { //TODO implement OR for fucking russians
       var tmp = parseValue(value, toRet, special);
       if (tmp !== null && tmp !== undefined) {
         toRet = tmp;
@@ -114,6 +127,22 @@ function parseValue(val, base, special) {
     });
     return toRet;
   }
+}
+
+function chkOverlap(args) {
+  var cls = args[0];
+  var elem = args[1].getBoundingClientRect();
+  var toRet = null;
+  $.each(cls, function(index, value) {
+    var rect = value.getBoundingClientRect();
+    if (elem.top > rect.top && elem.top < rect.bottom) {
+      if (elem.left > rect.left && elem.left < rect.right) {
+        toRet = value;
+        return;
+      }
+    }
+  });
+  return toRet;
 }
 
 /**
@@ -167,6 +196,7 @@ function setNameUsingAddress(addressToSet, mode){
 function addButton(args) {
   var postAddress = args[0];
   var special = args[1];
+  var type = args[2];
 
   if (postAddress === "") {
     return;
@@ -187,7 +217,7 @@ function addButton(args) {
     return;
   }
 
-  var b = document.createElement(special ? "a" : "li");
+  var b = document.createElement(type);
   if (special) {
     b.id = "tipPoster";
     b.className += ' entry';
@@ -238,9 +268,9 @@ function removeFocus(){
  * @return {Number} sum
  */
 function setFocus(element, isFocus){
-  if(isFocus){
+  if (isFocus) {
     element.className += " focused";
-  } else{
+  } else {
     element.className = element.className.replace(" focused", "");
   }
 }
@@ -324,11 +354,11 @@ function send4CHN() {
  * Searches the elements for the poster's address.
  * @return {string} postAddress
  */
-function getPostAddress(X) { //TODO special autodetection
+function getPostAddress(special) { //TODO special autodetection
   try {
     var tmp = elementCheck[site];
-    postNum = parseValue(X ? tmp.special.postNum : tmp.postNum, document, X);
-    var toRet = parseValue(X ? tmp.special.addr : tmp.addr, document, X);
+    postNum = parseValue(special ? tmp.special.postNum : tmp.postNum, document, special);
+    var toRet = parseValue(special ? tmp.special.addr : tmp.addr, document, special);
     if (typeof postNum != "string") {
       postNum = postNum.id;
     }
@@ -373,43 +403,43 @@ function mutationHandler(mutationRecords) {
  */
 function checkForCSS_Class(node, className) {
   if (node.nodeType === 1) {
-    if (node.classList.contains(className)) {
-      var actions = elementCheck[site].actions;
-      for (var action in actions) {
-        if (!actions.hasOwnProperty(action)) {
-          continue;
-        }
-
-        var args;
-
-        args = actions[action][className];
-        if (args === undefined || args === null) {
-          continue;
-        }
-
-        if (typeof args === "string") {
-          args = [elementCheck[site][args]];
-        }
-        else {
-          try {
-            var tmp = window[args[0]](args[1]);
-            args = [tmp, args[1]];
-          }
-          catch (e) {
-            var tmp = elementCheck[site];
-            $.each(args, function(index, value) {
-              if (index === 0) {
-                args = tmp[value];
-              }
-              else {
-                args = args[value];
-              }
-            });
-          }
-        }
-
-        window[action](args);
+    var actions = elementCheck[site].actions;
+    for (var action in actions) {
+      if (!actions.hasOwnProperty(action)) {
+        continue;
       }
+
+      var args;
+
+      args = actions[action][className];
+      if (args === undefined || args === null) {
+        continue;
+      }
+
+      console.log(args);
+
+      if (typeof args === "string") {
+        args = [elementCheck[site][args]];
+      }
+      else {
+        try {
+          var tmp = window[args[0]](args[1]);
+          args = [tmp, args[1]];
+        }
+        catch (e) {
+          var tmp = elementCheck[site];
+          $.each(args, function(index, value) {
+            if (index === 0) {
+              args = tmp[value];
+            }
+            else {
+              args = args[value];
+            }
+          });
+        }
+      }
+
+      window[action](args);
     }
   }
 }

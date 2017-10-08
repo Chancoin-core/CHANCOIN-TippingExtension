@@ -43,7 +43,6 @@
         "res/js/bootstrap.min.js",
         "res/js/sweetalert.min.js",
         "res/js/minify.json.js",
-        "res/js/overlap/jquery.overlaps.js",
         "src/inject/inject.js"
       ],
       "run_at":"document_end"

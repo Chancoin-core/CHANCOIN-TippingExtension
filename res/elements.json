@@ -5,6 +5,7 @@
  * * Put this in a child object and it pulls the parent's value of the key with the name you supplied
  * ;A - attribute
  * ;F - function call on the element before
+ * ;W - perform operation on window, not relative base; pairs only with F
  * ;C - class
  * ;I - ID
  * ;N - regular string for use with \\+
@@ -13,6 +14,7 @@
  *
  * \\+ before string - concatenation with string before in array
  * ^ in between two strings - string after are arguments for the function, separated by ˇ
+ * ~ at the end of a string: either do the string or the next string/array, depending on success
  * 
  * positive number - child with that index
  * -1 - parentNode
@@ -25,7 +27,7 @@
 		"watch": [ "reply", "dd-menu", "reply-to-thread", "menu-button" ],
 		"actions": {
 			"setAddressFromLocalStorageIfChecked": { "reply": "QR", "reply-to-thread": [ "special", "QR" ] },
-			"addButton": { "dd-menu": [ "getPostAddress", false ], "menu-button": [ "getPostAddress", true ] }
+			"addButton": { "dd-menu": [ "getPostAddress", false, "li" ], "menu-button": [ "getPostAddress", true, "a" ] }
 		},
 		"QR": [ ";I:qrForm", 0, 0 ],
 		"reg": [ ";I:postForm", 0, 0, 1, 0 ],
@@ -44,7 +46,7 @@
 		"watch": [ "post-menu", "post-table", "ui-draggable" ],
 		"actions": {
 			"setAddressFromLocalStorageIfChecked": { "ui-draggable": "QR", "post-table": "reg" },
-			"addButton": { "post-menu": [ "getPostAddress", false ] }
+			"addButton": { "post-menu": [ "getPostAddress", false, "li" ] }
 		},
 		"QR": [ ";I:quick-reply", 0, 1, 0, 0, 1, 0, 0 ],
 		"reg": [ ";I:post-form-inner", 1, 2, 0, 0, 1, 0 ],
@@ -57,12 +59,12 @@
 		"watch": [ "norm-reply", "qr-reply", "modal" ],
 		"actions": {
 			"setAddressFromLocalStorageIfChecked": { "qr-reply": "QR", "norm-reply": "reg" },
-			"addButton": { "modal": [ "getPostAddress", false ] }
+			"addButton": { "modal": [ "getPostAddress", false, "a" ] }
 		},
 		"QR": ";I:qr-e-mail",
 		"reg": ";I:name",
 		"menu": ";I:ABU-select",
-		"postNum": [ ";L:menu", ";F:overlaps^;C:post-wrapper", 0, ";A:data-num" ],
+		"postNum": [ ";FW:chkOverlap^;C:postˇ;L:menu", ";A:data-num~", [/*FINISH*/] ],
 		"addr": [ ";N:post-details-", "\\+;L:postNum", 1, ";A:innerText" ]
 	}
 }
