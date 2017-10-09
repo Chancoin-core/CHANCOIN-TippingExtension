@@ -1,7 +1,7 @@
 {
-  "name": "CHANCOIN : Tipping Extension TEST",
-  "version": "0.0.6",
-  "manifest_version": 2,
+  "name": "CHANCOIN : Tipping Extension",
+  "version": "0.1.0",
+  "manifest_version": 3,
   "description": "Simple tip extension created by the CHANCOIN Team.",
   "homepage_url": "http://chancoin.org",
   "icons": {
