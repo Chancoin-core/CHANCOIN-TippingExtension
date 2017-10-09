@@ -1,14 +1,41 @@
+var langDef;
+var lang = "en";
+
+function loadJSON(path) { //unfortunately, have to duplicate
+    var xhr = new XMLHttpRequest();
+    xhr.open("GET", chrome.extension.getURL(path), false);
+    xhr.send();
+    var sanity = 100;
+    while (xhr.readyState !== 4 || xhr.status !== 200)
+    {
+        if (sanity === 0) {
+          swal("Error!", "Failed to load JSON. Contact a developer with this error message.", "error");
+        }
+        else if (sanity > 0) {
+          sanity--;
+        }
+    }
+    return xhr.responseText;
+}
+
 function saveOptions(e) {
   e.preventDefault();
   var selectElement = document.getElementById('sel1')
   var address = selectElement.options[ selectElement.selectedIndex ].value
   var isChecked = document.getElementById('cmn-toggle-1').checked;
+  var langSel = document.getElementById('lang-sel');
+  var language = langSel[langSel.selectedIndex].value
   chrome.storage.local.set({
     address: address
   });
   chrome.storage.local.set({
     insert: isChecked
   });
+  chrome.storage.local.set({
+    lang: language
+  });
+  lang = language;
+  updateStrings();
 }
 
 /**
@@ -28,13 +55,21 @@ function getAddressFromWallet(){
         selectPreviousAddress();
       }
       else{
-        swal("Error!", "Error getting addresses from wallet. Is your wallet setup and running?", "error");
+        swal(langDef[lang].swal.error, langDef[lang].strings.walleterr, "error");
       }
   	},
   	error: function(xhr, textStatus, errorThrown) {
-      swal("Error!", "Error getting addresses from wallet. Is your wallet setup and running?", "error");
+      swal(langDef[lang].swal.error, langDef[lang].strings.walleterr, "error");
   	}
   });
+}
+
+function updateStrings() {
+  var toUpdateHTML = document.getElementsByClassName("settingLabel");
+  $.each(toUpdateHTML, function(index, value) {
+    value.innerText = langDef[lang].main[value.id];
+  });
+  document.getElementById("settings").innerText = langDef[lang].main.settings;
 }
 
 /**
@@ -45,7 +80,7 @@ function addOptionsToSelect(optionsArray){
   select = document.getElementById('sel1');
 
   for (var i = 0; i < optionsArray.length; i++){
-    addOptionToSelect(select, optionsArray[i].address)
+    addOptionToSelect(select, optionsArray[i].address, optionsArray[i].address)
   }
 }
 
@@ -54,11 +89,11 @@ function addOptionsToSelect(optionsArray){
  * @param {Element} selectElement selection box to add option to
  * @param {string} newOption new option to add
  */
-function addOptionToSelect(selectElement, newOption){
+function addOptionToSelect(selectElement, newVal, newHTML){
   var opt = document.createElement('option');
-  opt.value = newOption;
-  opt.innerHTML = newOption;
-  select.appendChild(opt);
+  opt.value = newVal;
+  opt.innerHTML = newHTML;
+  selectElement.appendChild(opt);
 }
 
 /**
@@ -92,7 +127,14 @@ function restoreSettings(){
     }
   }
 
-  chrome.storage.local.get("insert",setCurrentChoice);
+  chrome.storage.local.get("insert", setCurrentChoice);
+  chrome.storage.local.get("lang", function(result) {
+    if(result !== undefined && result.lang !== undefined && result.lang !== "") {
+      lang = result.lang;
+      updateStrings();
+      var select = document.getElementById('lang-sel').value = result.lang;
+    }
+  });
 }
 
 /**
@@ -108,10 +150,10 @@ function generateNewAddress(){
     contentType: "application/json-rpc;",
     success: function(response) {
       select = document.getElementById('sel1');
-      addOptionToSelect(select, response.result);
+      addOptionToSelect(select, response.result, response.result);
     },
     error: function(xhr, textStatus, errorThrown) {
-      swal("Error!", "Could not create a new address", "error");
+      swal(langDef[lang].swal.error, langDef[lang].strings.createerr, "error");
     }
   });
 }
@@ -120,6 +162,11 @@ window.onload = function() {
       document.getElementById("addNewButton").addEventListener("click", generateNewAddress);
       document.getElementById("cmn-toggle-1").addEventListener("change", saveOptions);
       document.getElementById('sel1').addEventListener("change", saveOptions);
+      document.getElementById('lang-sel').addEventListener("change", saveOptions);
+      langDef = JSON.parse(loadJSON("/res/lang.json"));
+      for (var l in langDef) {
+        addOptionToSelect(document.getElementById('lang-sel'), l, langDef[l].name);
+      }
       getAddressFromWallet();
       restoreSettings();
 };

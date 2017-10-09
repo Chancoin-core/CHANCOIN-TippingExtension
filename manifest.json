@@ -48,5 +48,5 @@
       "run_at":"document_end"
     }
   ],
-  "web_accessible_resources": ["res/html/modal.html","res/js/bootstrap.min.js","res/css/bootstrap.min.css","res/js/modal.js","res/elements.json"]
+  "web_accessible_resources": ["res/html/modal.html","res/js/bootstrap.min.js","res/css/bootstrap.min.css","res/js/modal.js","res/elements.json","res/lang.json"]
 }

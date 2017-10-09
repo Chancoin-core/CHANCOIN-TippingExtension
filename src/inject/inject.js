@@ -1,5 +1,7 @@
 var site;
 var elementCheck;
+var langDef;
+var lang = "en";
 var postNum;
 var postAddress;
 var special = false;
@@ -9,7 +11,8 @@ window.onload = function() {
     if (document.readyState === "complete") {
       clearInterval(readyStateCheckInterval);
 
-      elementCheck = JSON.parse(JSON.minify(loadElements()));
+      elementCheck = JSON.parse(JSON.minify(loadJSON("/res/elements.json")));
+      langDef = JSON.parse(loadJSON("/res/lang.json"));
 
       var patt = /https?:\/\/(?:.*\.)?(.+)\.\D{2,3}\/.*/gi;
       site = patt.exec(window.location.href)[1];
@@ -22,13 +25,21 @@ window.onload = function() {
       }
 
       var mutationObserver = window.MutationObserver;
-      var myObserver       = new mutationObserver (mutationHandler);
-      var obsConfig        = {
+      var myObserver = new mutationObserver (mutationHandler);
+      var obsConfig = {
         childList: true, attributes: true,
         subtree: true,   attributeFilter: ['class']
       };
 
-      myObserver.observe (document, obsConfig);
+      myObserver.observe(document, obsConfig);
+
+      setInterval(function() {
+        chrome.storage.local.get("lang", function(result) {
+          if(result !== undefined && result.lang !== undefined && result.lang !== "") {
+            lang = result.lang;
+          }
+        });
+      }, 500);
 
       //Set the classic original form name now as its already loaded in the DOM
       setAddressFromLocalStorageIfChecked(elementCheck[site].reg);
@@ -37,18 +48,19 @@ window.onload = function() {
 };
 
 /**
- * Gets the json file containing element definitions for chans
+ * Gets the json file defined by the parameter
+ * @param {string} path - determines path of json to load
  * @return {string} responseText
 */
-function loadElements() {
+function loadJSON(path) {
     var xhr = new XMLHttpRequest();
-    xhr.open("GET", chrome.extension.getURL('/res/elements.json'), false);
+    xhr.open("GET", chrome.extension.getURL(path), false);
     xhr.send();
     var sanity = 100;
     while (xhr.readyState !== 4 || xhr.status !== 200)
     {
         if (sanity === 0) {
-          swal("Error!", "Failed to load site definitions. Contact a developer with this error message.", "error");
+          swal("Error!", "Failed to load JSON. Contact a developer with this error message.", "error");
         }
         else if (sanity > 0) {
           sanity--;
@@ -268,7 +280,7 @@ function addButton(type) {
   }
   
   $.each(a.children, function(index, value) {
-    if(value.innerHTML.indexOf("Tip poster") != -1) { //id doesn't get set if vanilla
+    if(value.innerHTML.indexOf(langDef[lang].strings.button) != -1) { //id doesn't get set if vanilla
       doHalt = true;
       return false;
     }
@@ -286,7 +298,7 @@ function addButton(type) {
     b.onmouseout  = removeFocus;
     b.onmouseover = addFocus;
   }
-  b.innerHTML = "<img src='https://i.imgur.com/sh8aYT1.png' style='width:15px;vertical-align:middle'/>  Tip poster";
+  b.innerHTML = "<img src='https://i.imgur.com/sh8aYT1.png' style='width:15px;vertical-align:middle'/> " + langDef[lang].strings.button;
   b.addEventListener("click", send4CHN);
   a.appendChild(b);
 }
@@ -360,16 +372,17 @@ function addressFromPostName(postName) {
  */
 function send4CHN() {
   var address = addressFromPostName(postAddress);
-  console.log(address);
+
+  var l = langDef[lang];
 
   swal({
-    title: "Tip a poster",
-    text: "How much 4CHN would you like to send to " + address + "?",
+    title: l.strings.sendtitle,
+    text: l.strings.sendtext + address + "?",
     type: "input",
     showCancelButton: true,
     closeOnConfirm: false,
     animation: "slide-from-top",
-    inputPlaceholder: "Number of coins",
+    inputPlaceholder: l.strings.sendph,
     showLoaderOnConfirm: true,
   }, function(inputValue){
     //did user cancel
@@ -380,13 +393,13 @@ function send4CHN() {
     if (inputValue === "" || /^\D+$/.test(inputValue)) {
       //use a timeout so the loader has a chance to fire
       setTimeout(function(){
-        swal("Error!", "Please enter a number.", "error");
+        swal(l.swal.error, l.strings.formaterr, "error");
       }, 500);
     }
     else if (parseFloat(inputValue) < 0.00000001) {
       //use a timeout so the loader has a chance to fire
       setTimeout(function() {
-        swal("Error!", "Value must be greater than or equal to 0.00000001.", "error");
+        swal(l.swal.error, l.strings.amounterr, "error");
       }, 500);
     }
     else if (inputValue !== null) {
@@ -400,14 +413,14 @@ function send4CHN() {
         //use a timeout so the loader has a chance to fire
         setTimeout(function(){
           if (status.indexOf("error") != -1) {
-            swal("Error!", "There was an error sending the coins", "error");
+            swal(l.swal.error, l.strings.senderr, "error");
           }
           else {
-            swal("Success!", "You sent " + inputValue + " 4CHN to " + address + ".", "success");
+            swal(l.swal.success, l.strings.sendok[0] + inputValue + l.strings.sendok[1] + address + ".", "success");
           }
         }, 500);
       }).fail(function(xhr, status, error) {
-        swal("Error!", "There was an error sending the coins", "error");
+        swal(l.swal.error, l.strings.senderr, "error");
       });
     }
   });

@@ -29,15 +29,22 @@
                 <div id="main-title" class="center text header">CHANCOIN: Tip Extension</div>
 
                 <div class="center text bottom">
-                  <span style="font-size:22px">Settings</span>
+                  <span id="settings" style="font-size:22px">Settings</span>
                   <div class="switch center text">
-                    <span class="settingLabel">Automatically Insert Address:</span>
+                    <span id="auto-insert" style="padding-right:25%" class="settingLabel">Automatically Insert Address:</span>
                     <input id="cmn-toggle-1" class="cmn-toggle cmn-toggle-round" type="checkbox">
-                    <label id="cmn-toggle-1-label" for="cmn-toggle-1" style="margin-left: 50px; float:left;"></label>
+                    <label id="cmn-toggle-1-label" for="cmn-toggle-1" style="margin-left: 35px;float:top;margin-top:200%;padding-top:10px;margin-left:65%;margin-right:10px"></label>
                   </div>
                 </br>
+                  <div class="sel center text">
+                    <span id="lang" style="padding-right:5%" class="settingLabel">Language:</span>
+                    <select id="lang-sel" style="width:25%;width:auto" class="col-xs-11 form-control" >
+                    </select>
+                  </div>
+                </br>
+                </br>
                   <div>
-                    <span class="settingLabel">Address to Insert:</span>
+                    <span id='insert-address' class="settingLabel">Address to Insert:</span>
                       <select id="sel1" style="width: 85%; margin-left:10px; padding:0" class="col-xs-11 form-control" >
                       </select>
                       <button id="addNewButton" type="button" style="margin-left:10px; margin-top:2px; padding-left:10; padding-top:6" class="btn btn-default col-xs-1">

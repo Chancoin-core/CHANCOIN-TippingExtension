@@ -1,0 +1,54 @@
+{
+	"en": {
+		"name": "English",
+		"main": {
+			"main-title": "CHANCOIN: Tip Extension",
+			"lang": "Language:",
+			"settings": "Settings",
+			"auto-insert": "Automatically Insert Address:",
+			"insert-address": "Address to Insert:"
+		},
+		"swal": {
+			"error": "Error!",
+			"success": "Success!"
+		},
+		"strings": {
+			"walleterr": "Error getting addresses from wallet. Is your wallet setup and running?",
+			"createerr": "Could not create a new address",
+			"button":  "Tip poster",
+			"sendtitle": "Tip a poster",
+			"sendtext": "How much 4CHN would you like to send to ",
+			"sendph": "Number of coins",
+			"formaterr": "Please enter a number.",
+			"amounterr": "Value must be greater than or equal to 0.00000001.",
+			"senderr": "There was an error sending the coins",
+			"sendok": [ "You sent ", " 4CHN to " ]
+		}
+	},
+	"ru": {
+		"name": "Русский",
+		"main": {
+			"main-title": "CHANCOIN: Tip Extension",
+			"lang": "Язык:",
+			"settings": "Настройки",
+			"auto-insert": "Автовставка:",
+			"insert-address": "Список адресов:"
+		},
+		"swal": {
+			"error": "Ошибка!",
+			"success": "Отлично!"
+		},
+		"strings": {
+			"walleterr": "Не удается получить адрес кошелька. Кошелек не настроен или работает неправильно.",
+			"createerr": "Не удается создать новый адрес",
+			"button": "Оценить",
+			"sendtitle": "Поблагодарить за пост",
+			"sendtext": "Сколько 4CHN вы хотите отправить ",
+			"sendph": "Число монет",
+			"formaterr": "Введите число.",
+			"amounterr": "Число монет должно быть больше или равно 0.00000001.",
+			"senderr": "Произошла ошибка при попытке отправить монеты",
+			"sendok": [ "Вы отправили ", " 4CHN на" ]
+		}
+	}
+}
