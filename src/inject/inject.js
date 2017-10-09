@@ -204,7 +204,7 @@ function setAddressFromLocalStorageIfChecked(mode){
  * @return void
  */
 function setNameUsingAddress(addressToSet, mode){
-  var prefix = elementCheck[site].limit ? "$" : "$4CHN:";
+  var prefix = elementCheck[site].limit ? "" : "$";
   var formattedAddress = prefix + addressToSet;
  
   if (typeof mode[0] != "string") { //weird stuff
@@ -389,7 +389,7 @@ function getPostAddress(special) { //TODO special autodetection
     if (typeof postNum != "string") {
       postNum = postNum.id;
     }
-    var patt = /^\$(?:(?:(?:4CHN)|(?:CHAN)):)?\s?.{34}$/mgi;
+    var patt = /^\$?(?:(?:(?:4CHN)|(?:CHAN)):)?\s?[^IOl0]{34}$/mg;
     if (!patt.test(toRet)) {
       toRet = "";
     }

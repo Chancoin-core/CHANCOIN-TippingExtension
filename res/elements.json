@@ -45,7 +45,7 @@
 		}
 	},
 	"8ch": {
-		"limit": true,
+		"limit": false,
 		"watch": [ "post-menu", "post-table", "ui-draggable" ],
 		"actions": {
 			"setAddressFromLocalStorageIfChecked": { "ui-draggable": "QR", "post-table": "reg" },
@@ -58,7 +58,7 @@
 		"addr": [ ";L:postNum", -1, 3, 0, ";A:innerText" ]
 	},
 	"2ch": {
-		"limit": false,
+		"limit": true,
 		"watch": [ "norm-reply", "qr-reply", "modal" ],
 		"actions": {
 			"setAddressFromLocalStorageIfChecked": { "qr-reply": "QR", "norm-reply": "reg" },
