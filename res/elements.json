@@ -8,6 +8,7 @@
  * ;W - perform operation on window, not relative base; pairs only with F
  * ;B - set specific base
  * ;R - perform on relative base, for operations that normally operate on document
+ * ;T - tag name
  * ;C - class
  * ;I - ID
  * ;N - regular string for use with \\+
@@ -21,48 +22,49 @@
  * 
  * positive number - child with that index
  * -1 - parentNode
- * number after | in string with ;C identifier - index for picking from the returned element collection
+ * number after | in string with ;C or ;T modifier - index for picking from the returned element collection
 */
 
 {
 	"4chan": {
+		"classlist": true,
 		"limit": false,
-		"watch": [ "reply", "dd-menu", "reply-to-thread", "menu-button" ],
 		"actions": {
 			"setAddressFromLocalStorageIfChecked": { "reply": "QR", "reply-to-thread": [ "special", "QR" ] },
-			"addButton": { "dd-menu": [ "getPostAddress", false, "li" ], "menu-button": [ "getPostAddress", true, "a" ] }
+			"addButton": { "dd-menu": [ "getPostAddress", "li" ], "menu-button": [ "getPostAddress", "a" ] }
 		},
 		"QR": [ ";I:qrForm", 0, 0 ],
 		"reg": [ ";I:postForm", 0, 0, 1, 0 ],
 		"menu": [ ";I:post-menu", 0 ],
 		"postNum": [ ";L:menu", 0, 0, ";A:data-id" ], 
-		"addr": [ ";N:pi", "\\+;L:postNum", 1, 0, ";A:innerText" ],
+		"addr": [ ";N:pi", "\\+;L:postNum", ";RC:nameBlock|0", 0, ";A:innerText" ],
 		"special": {
+			"check": ";C:watch-thread-link",
 			"QR":  [ ";I:qr", 1, 0, 2 ],
 			"menu": ";I:menu",
-			"postNum": [ ";L:menu", -1, -1, 0, ";A:name" ],
+			"postNum": [ ";L:menu", -1, -1, 0, ";A:name~\\d+", [ ";CB:op|0", 2, 1, ";A:name" ] ],
 			"addr": ";P:addr"
 		}
 	},
 	"8ch": {
+		"classlist": true,
 		"limit": false,
-		"watch": [ "post-menu", "post-table", "ui-draggable" ],
 		"actions": {
 			"setAddressFromLocalStorageIfChecked": { "ui-draggable": "QR", "post-table": "reg" },
-			"addButton": { "post-menu": [ "getPostAddress", false, "li" ] }
+			"addButton": { "post-menu": [ "getPostAddress", "li" ] }
 		},
 		"QR": [ ";I:quick-reply", 0, 1, 0, 0, 1, 0, 0 ],
 		"reg": [ ";I:post-form-inner", 1, 2, 0, 0, 1, 0 ],
 		"menu": [ ";I:filter-menu-hide", -1 ],
-		"postNum": [ ";C:post-btn-open|0", -1, 0 ],
-		"addr": [ ";L:postNum", -1, 3, 0, ";A:innerText" ]
+		"postNum": [ ";C:post-btn-open|0", -1, 0, ";A:id~\\b\\d+", [ ";C:post-btn-open|0", -1, -1, -1, 0, ";A:id" ] ],
+		"addr": [ ";N:delete_", "\\+;L:postNum", -1, ";RT:label|0", ";RC:name|0", ";A:innerText" ]
 	},
 	"2ch": {
+		"classlist": false,
 		"limit": true,
-		"watch": [ "norm-reply", "qr-reply", "modal" ],
 		"actions": {
 			"setAddressFromLocalStorageIfChecked": { "qr-reply": "QR", "norm-reply": "reg" },
-			"addButton": { "modal": [ "getPostAddress", false, "a" ] }
+			"addButton": { "modal": [ "getPostAddress", "a" ] }
 		},
 		"QR": ";I:qr-e-mail",
 		"reg": ";I:name",

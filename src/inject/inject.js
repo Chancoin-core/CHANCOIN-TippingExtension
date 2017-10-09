@@ -1,16 +1,25 @@
 var site;
 var elementCheck;
-var postNum; //not ideal to make this global but since we're not passing arguments for whatever reason, we're doing this as well
+var postNum;
+var postAddress;
+var special = false;
 
 window.onload = function() {
   var readyStateCheckInterval = setInterval(function() {
     if (document.readyState === "complete") {
+      clearInterval(readyStateCheckInterval);
+
       elementCheck = JSON.parse(JSON.minify(loadElements()));
 
       var patt = /https?:\/\/(?:.*\.)?(.+)\.\D{2,3}\/.*/gi;
       site = patt.exec(window.location.href)[1];
 
-      clearInterval(readyStateCheckInterval);
+      if (elementCheck[site].special !== undefined && elementCheck[site].special !== null) {
+        var chk = parseValue(elementCheck[site].special.check, document);
+        if (chk !== undefined && chk !== null) {
+          special = true;
+        }
+      }
 
       var mutationObserver = window.MutationObserver;
       var myObserver       = new mutationObserver (mutationHandler);
@@ -30,20 +39,32 @@ window.onload = function() {
 /**
  * Gets the json file containing element definitions for chans
  * @return {string} responseText
- */
+*/
 function loadElements() {
     var xhr = new XMLHttpRequest();
     xhr.open("GET", chrome.extension.getURL('/res/elements.json'), false);
     xhr.send();
+    var sanity = 100;
     while (xhr.readyState !== 4 || xhr.status !== 200)
     {
-        ;; //TODO set a sanity var so we don't loop forever
+        if (sanity === 0) {
+          swal("Error!", "Failed to load site definitions. Contact a developer with this error message.", "error");
+        }
+        else if (sanity > 0) {
+          sanity--;
+        }
     }
     return xhr.responseText;
 }
 
-function parseValue(val, base, special) {
-  var patt = /^(?:\\\+)?;([LPAFWBRCIN]+):(.+)$/g;
+/**
+ * Parses the values passed to it
+ * @param {arr, string, number} val - value passed
+ * @param {elem} base - determines base from which to derive elements
+ * @return {elem, string} ret
+*/
+function parseValue(val, base) {
+  var patt = /^(?:\\\+)?;([LPAFWBRTCIN]+):(.+)$/g;
   if (typeof val == "string") {
     var match = patt.exec(val);
     var mod = match[1];
@@ -103,6 +124,13 @@ function parseValue(val, base, special) {
         case 'I':
           toRet = (useR ? base : document).getElementById(v);
           break;
+        case 'T':
+          var tmp = v.split("|");
+          toRet = (useR ? base : document).getElementsByTagName(tmp[0]);
+          if (tmp.length > 1) {
+            toRet = toRet[tmp[1]];
+          }
+          break;
         case 'F':
           var tmp = v.split('^');
           var args = tmp[1].split('ˇ');
@@ -139,7 +167,7 @@ function parseValue(val, base, special) {
       }
       var tmp = parseValue(value, toRet, special);
       if (or) {
-        var patt = new RegExp(value.split('~')[1], "gi");
+        var patt = new RegExp(value.split('~')[1], "gmi");
         if (!patt.test(tmp)) {
           toRet = base;
           return true;
@@ -156,6 +184,11 @@ function parseValue(val, base, special) {
   }
 }
 
+/**
+ * Checks for overlapping elements by checking every element of the passed class for overlap with passed element
+ * @param {arr} args - array from which to derive the element and class to check
+ * @return {elem} ret
+*/
 function chkOverlap(args) {
   var cls = args[0];
   var elem = args[1].getBoundingClientRect();
@@ -220,11 +253,7 @@ function setNameUsingAddress(addressToSet, mode){
  * Adds the tip poster button to the menu.
  * @return void
  */
-function addButton(args) {
-  var postAddress = args[0];
-  var special = args[1];
-  var type = args[2];
-
+function addButton(type) {
   if (postAddress === "") {
     return;
   }
@@ -233,10 +262,15 @@ function addButton(args) {
   var a = parseValue(special ? tmp.special.menu : tmp.menu, document, special);
 
   var doHalt = false;
+
+  if (a === null || a === undefined) {
+    return;
+  }
+  
   $.each(a.children, function(index, value) {
     if(value.innerHTML.indexOf("Tip poster") != -1) { //id doesn't get set if vanilla
       doHalt = true;
-      return; //this just breaks the each, not the whole fn; hence the doHalt
+      return false;
     }
   });
 
@@ -258,46 +292,46 @@ function addButton(args) {
 }
 
 /**
- * Clears the Focused class from all child nodes in the menu element.
+ * Clears the focused class from all child nodes in the menu element.
  * @return void
  */
-function clearFocusedClassFromMenu(){
-  var childNodes = document.getElementById("menu").children; //TODO refactor
+function clearFocusedClassFromMenu() {
+  var elem = special ? elementCheck[site].special.menu : elementCheck[site].menu;
+  var menu = parseValue(elem, document);
 
-  for (var J = 0, L = childNodes.length;  J < L;  ++J) {
-    if (childNodes[J].className.includes("focused")){
-      setFocus(childNodes[J], false);
-    }
-  }
+  $.each(menu.getElementsByClassName("focused"), function(index, value) {
+    setFocus(value, false);
+  });
 }
 
 /**
- * Adds Focus to the tipPoster element
+ * Adds focus to the tipPoster element
  * @return void
  */
-function addFocus(){
+function addFocus() {
   clearFocusedClassFromMenu();
   setFocus(document.getElementById("tipPoster"), true);
 }
 
 /**
- * Removes Focus to the tipPoster element
+ * Removes focus to the tipPoster element
  * @return void
  */
-function removeFocus(){
+function removeFocus() {
   setFocus(document.getElementById("tipPoster"), false);
 }
 
 /**
- * adds or removes the 'focused' class from the passed in element depending on the isFocued parameter.
+ * Adds or removes the 'focused' class from the passed in element depending on the isFocused parameter.
  * @param {Element} element
- * @param {boolean} isFocued
+ * @param {boolean} isFocused
  * @return {Number} sum
  */
-function setFocus(element, isFocus){
-  if (isFocus) {
+function setFocus(element, isFocused) {
+  if (isFocused) {
     element.className += " focused";
-  } else {
+  }
+  else {
     element.className = element.className.replace(" focused", "");
   }
 }
@@ -310,7 +344,13 @@ function setFocus(element, isFocus){
  * @return {string} address
  */
 function addressFromPostName(postName) {
-  return postName.split(':')[1];
+  if (postName.indexOf(':') !== -1) {
+    return postName.split(':')[1];
+  }
+  if (postName.indexOf('$') !== -1) { //in case someone sets their addr manually
+    return postName.split('$')[1];
+  }
+  return postName;
 }
 
 /**
@@ -319,12 +359,8 @@ function addressFromPostName(postName) {
  * @return {Number} sum
  */
 function send4CHN() {
-  var postAddress = getPostAddress();
-  if (postAddress === ""){
-    postAddress = getPostAddress(true);
-  }
-
-  var address = addressFromPostName(postAddress.replace(/\s+/g, ''));
+  var address = addressFromPostName(postAddress);
+  console.log(address);
 
   swal({
     title: "Tip a poster",
@@ -379,24 +415,17 @@ function send4CHN() {
 
 /**
  * Searches the elements for the poster's address.
- * @return {string} postAddress
+ * @return void
  */
-function getPostAddress(special) { //TODO special autodetection
-  try {
-    var tmp = elementCheck[site];
-    postNum = parseValue(special ? tmp.special.postNum : tmp.postNum, document, special);
-    var toRet = parseValue(special ? tmp.special.addr : tmp.addr, document, special);
-    if (typeof postNum != "string") {
-      postNum = postNum.id;
-    }
-    var patt = /^\$?(?:(?:(?:4CHN)|(?:CHAN)):)?\s?[^IOl0]{34}$/mg;
-    if (!patt.test(toRet)) {
-      toRet = "";
-    }
-    return toRet;
-  } catch(e) {
-    return "";
+function getPostAddress() {
+  var tmp = elementCheck[site];
+  postNum = parseValue(special ? tmp.special.postNum : tmp.postNum, document, special);
+  var addr = parseValue(special ? tmp.special.addr : tmp.addr, document, special);
+  var patt = /^\$?(?:(?:(?:4CHN)|(?:CHAN)):)?\s?[^IOl0]{34}$/mg;
+  if (!patt.test(addr)) {
+    addr = "";
   }
+  postAddress = addr;
 }
 
 /**
@@ -406,17 +435,21 @@ function getPostAddress(special) { //TODO special autodetection
  */
 function mutationHandler(mutationRecords) {
   mutationRecords.forEach(function(mutation) {
-    if (mutation.type == "childList" && typeof mutation.addedNodes  == "object" && mutation.addedNodes.length) {
+    if (mutation.type == "childList" && typeof mutation.addedNodes == "object" && mutation.addedNodes.length) {
       for (var J = 0, L = mutation.addedNodes.length;  J < L;  ++J) {
-        $.each(elementCheck[site].watch, function(index, value) {
-          checkForCSS_Class(mutation.addedNodes[J], value);
-        });
+        for (var v1 in elementCheck[site].actions) {
+          for (var v2 in elementCheck[site].actions[v1]) {
+            checkForCSS_Class(mutation.addedNodes[J], v2);
+          }
+        }
       }
     }
     else if (mutation.type == "attributes") {
-      $.each(elementCheck[site].watch, function(index, value) {
-          checkForCSS_Class(mutation.target, value);
-        });
+      for (var v1 in elementCheck[site].actions) {
+        for (var v2 in elementCheck[site].actions[v1]) {
+          checkForCSS_Class(mutation.target, v2);
+        }
+      }
     }
   });
 }
@@ -430,29 +463,36 @@ function mutationHandler(mutationRecords) {
  */
 function checkForCSS_Class(node, className) {
   if (node.nodeType === 1) {
+    if (elementCheck[site].classlist) {
+      if (!node.classList.contains(className)) {
+        return;
+      }
+    }
+
     var actions = elementCheck[site].actions;
     for (var action in actions) {
       if (!actions.hasOwnProperty(action)) {
         continue;
       }
 
-      var args;
-      args = actions[action][className];
+      var args = actions[action][className];
+
       if (args === undefined || args === null) {
         continue;
       }
+
+      args = args.slice(); // noice
 
       if (typeof args === "string") {
         args = [elementCheck[site][args]];
       }
       else {
         try {
-          var tmp = window[args[0]](args[1]);
-          var tmp2 = [tmp];
-          $.each(args.slice(1, args.length), function(index, value) {
-            tmp2.push(value);
-          });
-          args = tmp2;
+          try {
+            window[args[0]](args[1]);
+          }
+          catch (e) { } // to mitigate errors with things like 'modal'
+          args.splice(0, 1);
         }
         catch (e) {
           var tmp = elementCheck[site];
