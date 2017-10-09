@@ -21,13 +21,19 @@ function loadJSON(path) { //unfortunately, have to duplicate
 function saveOptions(e) {
   e.preventDefault();
   var selectElement = document.getElementById('sel1')
-  var address = selectElement.options[ selectElement.selectedIndex ].value
+  var address;
+  try {
+    address = selectElement.options[ selectElement.selectedIndex ].value
+  }
+  catch (e) {}
   var isChecked = document.getElementById('cmn-toggle-1').checked;
   var langSel = document.getElementById('lang-sel');
   var language = langSel[langSel.selectedIndex].value
-  chrome.storage.local.set({
-    address: address
-  });
+  if (address !== null && address !== undefined) {
+    chrome.storage.local.set({
+      address: address
+    });
+  }
   chrome.storage.local.set({
     insert: isChecked
   });
@@ -114,9 +120,9 @@ function selectPreviousAddress(){
 }
 
 /**
- * Restores the checkbox state
+ * Restores the states of elements
  */
-function restoreSettings(){
+function restoreSettings() {
   function setCurrentChoice(result) {
     if(result !== undefined && result.insert !== undefined && result.insert !== ""){
       document.getElementById('cmn-toggle-1').checked = result.insert;
