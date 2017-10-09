@@ -303,6 +303,7 @@ function addButton(type) {
   a.appendChild(b);
 }
 
+
 /**
  * Clears the focused class from all child nodes in the menu element.
  * @return void
