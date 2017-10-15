@@ -1,0 +1,25 @@
+{
+  "name": "chancoin-tippingextension",
+  "version": "0.0.0",
+  "description": "(╯°□°）╯︵ ┻━┻)",
+  "main": "not_applicable.js",
+  "scripts": {
+    "test": "echo nothing to see here"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Chancoin-core/CHANCOIN-TippingExtension.git"
+  },
+  "keywords": [
+  ],
+  "author": "",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/Chancoin-core/CHANCOIN-TippingExtension/issues"
+  },
+  "homepage": "https://github.com/Chancoin-core/CHANCOIN-TippingExtension#readme",
+  "devDependencies": {
+    "gulp": "^3.9.1",
+    "webpack-stream": "^4.0.0"
+  }
+}
