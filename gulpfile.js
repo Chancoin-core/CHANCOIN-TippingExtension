@@ -19,7 +19,6 @@ gulp.task('copyManifest', [], function() {
 
 gulp.task('bundleSrc', [], bundleSrc);
 
-gulp.task('test',
 function bundleSrc() {
   gulp.src('./src/inject/inject.js')
     .pipe(webpack({
