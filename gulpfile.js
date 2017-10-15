@@ -28,5 +28,4 @@ function bundleSrc() {
       }
     }))
     .pipe(gulp.dest('dist/inject/'))
-
 }

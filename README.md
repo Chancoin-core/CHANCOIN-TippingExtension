@@ -58,3 +58,14 @@ If you like what I do, feel free to donate!
 4CHN: `CbaNhNEnVBEx4CmCtDSatEhhwLp9WaCLjQ`
 
 BTC: `1L4oM2DRtGseFLBLsUrgyMoM1oZv3FCbCz`
+
+## Development
+
+To set up your dev environment:
+
+* `npm install -g gulp`
+* `npm install`
+
+To build the files:
+
+* `gulp`
